@@ -15,4 +15,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GestorFinanceiro.Data\GestorFinanceiro.Data.csproj" />
+  </ItemGroup>
+
 </Project>
