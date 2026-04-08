@@ -1,1 +1,4 @@
-<Solution />
+<Solution>
+  <Project Path="GestorFinanceiro.API/GestorFinanceiro.API.csproj" />
+  <Project Path="GestorFinanceiro.Web/GestorFinanceiro.Web.csproj" />
+</Solution>
