@@ -1,9 +1,5 @@
 ﻿using GestorFinanceiro.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Text;
 
 namespace GestorFinanceiro.Data.Context
 {
@@ -15,28 +11,58 @@ namespace GestorFinanceiro.Data.Context
         }
 
         public DbSet<Utilizador> Utilizadores { get; set; }
-        public DbSet<SessaoGestao> SessoesGestao { get; set; }
+        public DbSet<SessaoFinanceira> SessoesFinanceiras { get; set; }
+        public DbSet<Receita> Receitas { get; set; }
+        public DbSet<ReceitaRecorrente> ReceitasRecorrentes { get; set; }
+        public DbSet<Despesa> Despesas { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
-        public DbSet<Gasto> Gastos { get; set; }
-        public DbSet<SessaoCategoria> SessaoCategorias { get; set; }
+        public DbSet<SessaoFinanceiraCategoria> SessaoFinanceiraCategorias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<SessaoCategoria>()
-                .HasKey(sc => new { sc.SessaoGestaoId, sc.CategoriaId });
+            // Utilizador -> SessaoFinanceira (1:N)
+            modelBuilder.Entity<SessaoFinanceira>()
+                .HasOne(s => s.Utilizador)
+                .WithMany(u => u.SessoesFinanceiras)
+                .HasForeignKey(s => s.UtilizadorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<SessaoCategoria>()
-                .HasOne(sc => sc.SessaoGestao)
-                .WithMany(s => s.SessaoCategorias)
-                .HasForeignKey(sc => sc.SessaoGestaoId);
+            // SessaoFinanceira -> Receita (1:N)
+            modelBuilder.Entity<Receita>()
+                .HasOne(r => r.SessaoFinanceira)
+                .WithMany(s => s.Receitas)
+                .HasForeignKey(r => r.SessaoFinanceiraId)
+                .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<SessaoCategoria>()
+            // SessaoFinanceira -> ReceitaRecorrente (1:N)
+            modelBuilder.Entity<ReceitaRecorrente>()
+                .HasOne(rr => rr.SessaoFinanceira)
+                .WithMany(s => s.ReceitasRecorrentes)
+                .HasForeignKey(rr => rr.SessaoFinanceiraId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // SessaoFinanceira -> Despesa (1:N)
+            modelBuilder.Entity<Despesa>()
+                .HasOne(d => d.SessaoFinanceira)
+                .WithMany(s => s.Despesas)
+                .HasForeignKey(d => d.SessaoFinanceiraId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // SessaoFinanceira <-> Categoria (N:M)
+            modelBuilder.Entity<SessaoFinanceiraCategoria>()
+                .HasKey(sc => new { sc.SessaoFinanceiraId, sc.CategoriaId });
+
+            modelBuilder.Entity<SessaoFinanceiraCategoria>()
+                .HasOne(sc => sc.SessaoFinanceira)
+                .WithMany(s => s.SessaoFinanceiraCategorias)
+                .HasForeignKey(sc => sc.SessaoFinanceiraId);
+
+            modelBuilder.Entity<SessaoFinanceiraCategoria>()
                 .HasOne(sc => sc.Categoria)
-                .WithMany(c => c.SessaoCategorias)
+                .WithMany(c => c.SessaoFinanceiraCategorias)
                 .HasForeignKey(sc => sc.CategoriaId);
         }
     }
 }
-
