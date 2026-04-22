@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace GestorFinanceiro.Data.Models
 {
@@ -8,12 +7,10 @@ namespace GestorFinanceiro.Data.Models
     {
         public int Id { get; set; }
 
+        [Required]
         public string Nome { get; set; } = string.Empty;
 
-        public ICollection<Gasto> Gastos { get; set; }
-            = new List<Gasto>();
-
-        public ICollection<SessaoCategoria> SessaoCategorias { get; set; }
-            = new List<SessaoCategoria>();
+        public ICollection<SessaoFinanceiraCategoria> SessaoFinanceiraCategorias { get; set; }
+            = new List<SessaoFinanceiraCategoria>();
     }
 }

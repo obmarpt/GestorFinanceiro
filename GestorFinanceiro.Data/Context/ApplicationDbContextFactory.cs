@@ -21,3 +21,11 @@ namespace GestorFinanceiro.Data.Context
 
 //Código gerado por ChatGPT, um modelo de linguagem desenvolvido pela OpenAI.
 //O código é fornecido para auxiliar nas migracoes uma vez que com o programa offline o context padrao nao é fornecido
+
+//🧠 Para que serve isto?
+
+//Permite ao EF criar o DbContext quando corres Add-Migration
+//Funciona fora da API/Web
+//Só é usado em tempo de design
+
+//✅ Isto é normal e correto em soluções multi‑projeto

@@ -1,7 +1,5 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace GestorFinanceiro.Data.Models
 {
@@ -9,15 +7,19 @@ namespace GestorFinanceiro.Data.Models
     {
         public int Id { get; set; }
 
+        [Required]
         public string Nome { get; set; } = string.Empty;
 
+        [Required, EmailAddress]
         public string Email { get; set; } = string.Empty;
 
+        [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
+        [Required]
         public string Role { get; set; } = "Utilizador";
 
-        public ICollection<SessaoGestao> SessoesGestao { get; set; }
-            = new List<SessaoGestao>();
+        public ICollection<SessaoFinanceira> SessoesFinanceiras { get; set; }
+            = new List<SessaoFinanceira>();
     }
 }

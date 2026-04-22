@@ -1,0 +1,31 @@
+
+
+Estrutura proposta :
+
+GestaoFinanceira.sln
+│
+├── GestaoFinanceira.Web        → Razor Pages (Interface)
+├── GestaoFinanceira.Api        → ASP.NET Core MVC (API REST)
+├── GestaoFinanceira.Data       → Entity Framework / Models / DbContext
+
+Logica de Negócio:
+
+Utilizador (1)
+   └─── (N) ContaFinanceira
+              ├── (N) Despesa
+              └── (N) Categoria (via ContaCategoria)
+
+1. Models definem estrutura
+2. DbContext liga os Models
+3. EF cria modelo interno
+4. Snapshot guarda estado antigo
+5. Add-Migration compara modelos
+6. Migration descreve alterações
+7. Update-Database aplica na BD
+
+✅ Utilizador → SessaoFinanceira (1:N)
+✅ SessaoFinanceira → Receita (1:N)
+✅ SessaoFinanceira → ReceitaRecorrente (1:N)
+✅ SessaoFinanceira → Despesa (1:N)
+✅ SessaoFinanceira ↔ Categoria (N:M)
+

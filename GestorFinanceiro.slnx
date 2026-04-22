@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="funcionalidades.txt" />
+    <File Path="projeto.txt" />
+  </Folder>
   <Project Path="GestorFinanceiro.API/GestorFinanceiro.API.csproj" />
   <Project Path="GestorFinanceiro.Data/GestorFinanceiro.Data.csproj" />
   <Project Path="GestorFinanceiro.Web/GestorFinanceiro.Web.csproj" />
