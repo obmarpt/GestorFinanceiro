@@ -1,23 +1,30 @@
 using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.API.Hubs;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
+// Controllers
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+// OpenAPI / Swagger
 builder.Services.AddOpenApi();
 
-
+// DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// SignalR
+builder.Services.AddSignalR();
+
+// 🔐 Autenticação / Autorização (necessário para [Authorize])
+builder.Services.AddAuthentication();
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -25,8 +32,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// ✅ ORDEM CORRETA
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
+// Endpoints
 app.MapControllers();
+app.MapHub<FinanceHub>("/financeHub");
 
 app.Run();
