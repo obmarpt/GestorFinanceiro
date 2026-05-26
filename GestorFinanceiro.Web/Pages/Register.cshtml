@@ -1,0 +1,71 @@
+﻿@page
+@model GestorFinanceiro.Web.Pages.RegisterModel
+
+@{
+    ViewData["Title"] = "Registo";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+
+            <div class="card shadow">
+                <div class="card-body">
+
+                    <h3 class="text-center mb-4">Criar Conta</h3>
+
+                    <!-- ✅ Mensagem ERRO -->
+                    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+                    {
+                        <div class="alert alert-danger">
+                            @Model.MensagemErro
+                        </div>
+                    }
+
+                    <!-- ✅ Mensagem SUCESSO -->
+                    @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
+                    {
+                        <div class="alert alert-success">
+                            @Model.MensagemSucesso
+                        </div>
+                    }
+
+                    <form method="post">
+
+                        <!-- ✅ EMAIL -->
+                        <div class="form-group mb-3">
+                            <label>Email</label>
+                            <input asp-for="Email" class="form-control" placeholder="Introduza o email" />
+                        </div>
+
+                        <!-- ✅ PASSWORD -->
+                        <div class="form-group mb-3">
+                            <label>Password</label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Introduza a password" />
+                        </div>
+
+                        <!-- ✅ CONFIRM PASSWORD -->
+                        <div class="form-group mb-3">
+                            <label>Confirmar Password</label>
+                            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirme a password" />
+                        </div>
+
+                        <!-- ✅ BOTÃO -->
+                        <button type="submit" class="btn btn-success w-100">
+                            Registar
+                        </button>
+
+                    </form>
+
+                    <!-- ✅ LINK PARA LOGIN -->
+                    <div class="text-center mt-3">
+                        <a href="/Login">Já tenho conta</a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+``
