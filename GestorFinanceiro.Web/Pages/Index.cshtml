@@ -1,10 +1,59 @@
 ﻿@page
-@model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
+@model GestorFinanceiro.Web.Pages.IndexModel
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="dashboard-container">
+
+    <!-- ✅ HEADER -->
+    <div class="dashboard-header">
+        <h2>Bem-vindo, @Model.Username 👋</h2>
+
+        <div>
+            /Logout
+            Logout
+        </a>
+    </div>
+</div>
+
+<!-- ✅ BOTÃO -->
+<a href="#" class="btn-custom mb-4">
+    ➕ Nova Sessão
+</a>
+
+<!-- ✅ RESUMO -->
+<div class="summary-cards">
+
+    <div class="summary-card">
+        <h6>Receitas</h6>
+        <div class="value text-success">0 €</div>
+    </div>
+
+    <div class="summary-card">
+        <h6>Despesas</h6>
+        <div class="value text-danger">0 €</div>
+    </div>
+
+    <div class="summary-card">
+        <h6>Saldo</h6>
+        <div class="value text-primary">0 €</div>
+    </div>
+
+</div>
+
+<!-- ✅ SESSÕES -->
+<div class="sessions-card">
+
+    <div class="sessions-header">
+        <h5>As Minhas Sessões</h5>
+
+        <a href="#" class="btn-custom">
+            + Criar
+        </a>
+    </div>
+
+    <div class="sessions-empty">
+        Ainda não tens sessões criadas.
+    </div>
+
+</div>
+
 </div>
