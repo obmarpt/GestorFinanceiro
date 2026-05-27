@@ -4,6 +4,7 @@
 @{
     ViewData["Title"] = "Login";
 }
+
 <style>
     body {
         background-color: #f5f5f5;
@@ -19,24 +20,48 @@
 
                     <h3 class="text-center mb-4">Login</h3>
 
+                    <!-- ❌ ERRO -->
+                    <!-- Mensagem de erro-->
+                    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+                    {
+                        <div class="alert alert-danger">
+                            @Model.MensagemErro
+                        </div>
+                    }
+
+                    <!-- ✅ SUCESSO -->
+                    <!-- Mensagem de sucesso-->
+                    @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
+                    {
+                        <div class="alert alert-success">
+                            @Model.MensagemSucesso
+                        </div>
+                    }
+
                     <form method="post">
+
+                        <!-- ✅ USERNAME OU EMAIL -->
                         <div class="form-group mb-3">
-                            <label>Email</label>
-                            <input type="email" class="form-control" placeholder="Introduza o email" />
+                            <label>Username ou Email</label>
+                            <input asp-for="LoginInput" class="form-control" placeholder="Introduza username ou email" />
                         </div>
 
+                        <!-- ✅ PASSWORD -->
                         <div class="form-group mb-3">
                             <label>Password</label>
-                            <input type="password" class="form-control" placeholder="Introduza a password" />
+                            <input asp-for="Password" type="password" class="form-control" />
                         </div>
 
+                        <!-- ✅ BOTÃO -->
                         <button type="submit" class="btn btn-primary w-100">
                             Entrar
                         </button>
+
                     </form>
 
+                    <!-- ✅ LINK PARA REGISTO -->
                     <div class="text-center mt-3">
-                        <a href="/Register">Criar conta</a>
+                        /RegisterCriar conta</a>
                     </div>
 
                 </div>
