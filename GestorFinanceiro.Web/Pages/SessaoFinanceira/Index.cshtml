@@ -12,9 +12,14 @@
         <a asp-page="Create" class="btn-custom">➕ Nova Sessão</a>
     </div>
 
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-danger">@Model.MensagemErro</div>
+    }
+
     <div class="sessions-card">
 
-        @if (!Model.Sessoes.Any())
+        @if (!Model.Sessoes.Any() && string.IsNullOrEmpty(Model.MensagemErro))
         {
             <div class="sessions-empty">
                 <p>Ainda não tens sessões criadas.</p>

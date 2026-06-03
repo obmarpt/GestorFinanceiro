@@ -45,13 +45,13 @@ namespace GestorFinanceiro.API.Controllers
 
         // POST: api/SessaoFinanceira
         [HttpPost]
-        public IActionResult CriarSessaoFinanceira([FromBody] SessaoFinanceira sessao)
+        public async Task<IActionResult> CriarSessaoFinanceira([FromBody] SessaoFinanceira sessao)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             _context.SessoesFinanceiras.Add(sessao);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(
                 nameof(GetSessaoFinanceira),

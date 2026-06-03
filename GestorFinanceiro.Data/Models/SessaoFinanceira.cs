@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace GestorFinanceiro.Data.Models
 {
@@ -17,7 +18,9 @@ namespace GestorFinanceiro.Data.Models
 
         [Required]
         public int UtilizadorId { get; set; }
-        public Utilizador Utilizador { get; set; }
+
+        [JsonIgnore]
+        public Utilizador? Utilizador { get; set; }
 
         public ICollection<Receita> Receitas { get; set; }
             = new List<Receita>();

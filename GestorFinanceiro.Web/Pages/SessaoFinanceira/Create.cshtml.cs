@@ -1,10 +1,9 @@
-using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
@@ -12,11 +11,11 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
     [Authorize]
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public CreateModel(ApplicationDbContext context)
+        public CreateModel(IHttpClientFactory httpClientFactory)
         {
-            _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty]
@@ -37,36 +36,41 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             if (!ModelState.IsValid)
                 return Page();
 
-            var utilizador = await ObterUtilizadorLogadoAsync();
-            if (utilizador == null)
-                return RedirectToPage("/Login");
+            var utilizadorIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(utilizadorIdClaim, out var utilizadorId))
+            {
+                MensagemErro = "Sessão inválida. Faça login novamente.";
+                return Page();
+            }
 
             var sessao = new Data.Models.SessaoFinanceira
             {
                 Nome = Nome.Trim(),
                 Descricao = string.IsNullOrWhiteSpace(Descricao) ? null : Descricao.Trim(),
                 DataCriacao = DateTime.Now,
-                UtilizadorId = utilizador.Id
+                UtilizadorId = utilizadorId
             };
 
-            _context.SessoesFinanceiras.Add(sessao);
-            await _context.SaveChangesAsync();
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+
+            HttpResponseMessage response;
+            try
+            {
+                response = await client.PostAsJsonAsync("api/SessaoFinanceira", sessao);
+            }
+            catch (HttpRequestException ex)
+            {
+                MensagemErro = $"Erro de ligação à API: {ex.Message}. Confirme que a API está a correr em http://localhost:5281.";
+                return Page();
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                MensagemErro = "Não foi possível criar a sessão. Verifique se a API está a correr.";
+                return Page();
+            }
 
             return RedirectToPage("Index");
-        }
-
-        private async Task<Utilizador?> ObterUtilizadorLogadoAsync()
-        {
-            var username = User.FindFirstValue(ClaimTypes.Name);
-            var email = User.FindFirstValue(ClaimTypes.Email);
-
-            if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(email))
-                return null;
-
-            return await _context.Utilizadores
-                .FirstOrDefaultAsync(u =>
-                    u.Username == username ||
-                    u.Email == email);
         }
     }
 }

@@ -1,51 +1,68 @@
-using GestorFinanceiro.Data.Context;
-using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
+using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 {
     [Authorize]
     public class IndexModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public IndexModel(ApplicationDbContext context)
+        private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            _context = context;
+            PropertyNameCaseInsensitive = true
+        };
+
+        public IndexModel(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
         }
 
         public IList<Data.Models.SessaoFinanceira> Sessoes { get; set; } = [];
 
+        public string? MensagemErro { get; set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
-            var utilizador = await ObterUtilizadorLogadoAsync();
-            if (utilizador == null)
-                return RedirectToPage("/Login");
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            var response = await client.GetAsync("api/SessaoFinanceira");
 
-            Sessoes = await _context.SessoesFinanceiras
-                .Where(s => s.UtilizadorId == utilizador.Id)
+            if (!response.IsSuccessStatusCode)
+            {
+                MensagemErro = "Não foi possível carregar as sessões. Verifique se a API está a correr.";
+                return Page();
+            }
+
+            var todas = await response.Content.ReadFromJsonAsync<List<Data.Models.SessaoFinanceira>>(JsonOptions) ?? [];
+
+            Sessoes = FiltrarSessoesDoUtilizador(todas)
                 .OrderByDescending(s => s.DataCriacao)
-                .ToListAsync();
+                .ToList();
 
             return Page();
         }
 
-        private async Task<Utilizador?> ObterUtilizadorLogadoAsync()
+        private List<Data.Models.SessaoFinanceira> FiltrarSessoesDoUtilizador(IEnumerable<Data.Models.SessaoFinanceira> sessoes)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var username = User.FindFirstValue(ClaimTypes.Name);
             var email = User.FindFirstValue(ClaimTypes.Email);
 
-            if (string.IsNullOrEmpty(username) && string.IsNullOrEmpty(email))
-                return null;
+            return sessoes.Where(s =>
+            {
+                if (!string.IsNullOrEmpty(userId) && s.UtilizadorId.ToString() == userId)
+                    return true;
 
-            return await _context.Utilizadores
-                .FirstOrDefaultAsync(u =>
-                    u.Username == username ||
-                    u.Email == email);
+                if (s.Utilizador == null)
+                    return false;
+
+                return (!string.IsNullOrEmpty(username) && s.Utilizador.Username == username)
+                    || (!string.IsNullOrEmpty(email) && s.Utilizador.Email == email);
+            }).ToList();
         }
     }
 }
