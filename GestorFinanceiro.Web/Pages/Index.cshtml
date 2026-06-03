@@ -15,7 +15,7 @@
 </div>
 
 <!-- ✅ BOTÃO -->
-<a href="#" class="btn-custom mb-4">
+<a asp-page="/SessaoFinanceira/Create" class="btn-custom mb-4">
     ➕ Nova Sessão
 </a>
 
@@ -45,13 +45,14 @@
     <div class="sessions-header">
         <h5>As Minhas Sessões</h5>
 
-        <a href="#" class="btn-custom">
+        <a asp-page="/SessaoFinanceira/Create" class="btn-custom">
             + Criar
         </a>
     </div>
 
     <div class="sessions-empty">
-        Ainda não tens sessões criadas.
+        <p>Ainda não tens sessões criadas.</p>
+        <a asp-page="/SessaoFinanceira/Index" class="btn-custom">Ver sessões</a>
     </div>
 
 </div>

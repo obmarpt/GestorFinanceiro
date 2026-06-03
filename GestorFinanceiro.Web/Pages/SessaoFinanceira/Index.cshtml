@@ -1,0 +1,55 @@
+@page
+@model GestorFinanceiro.Web.Pages.SessaoFinanceira.IndexModel
+
+@{
+    ViewData["Title"] = "Sessões Financeiras";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <h2>As Minhas Sessões</h2>
+        <a asp-page="Create" class="btn-custom">➕ Nova Sessão</a>
+    </div>
+
+    <div class="sessions-card">
+
+        @if (!Model.Sessoes.Any())
+        {
+            <div class="sessions-empty">
+                <p>Ainda não tens sessões criadas.</p>
+                <a asp-page="Create" class="btn-custom">Criar primeira sessão</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Criada em</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sessao in Model.Sessoes)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@sessao.Nome</td>
+                                <td>@(string.IsNullOrEmpty(sessao.Descricao) ? "—" : sessao.Descricao)</td>
+                                <td>@sessao.DataCriacao.ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+    </div>
+
+    <div class="mt-3">
+        <a asp-page="/Index" class="text-muted">← Voltar ao dashboard</a>
+    </div>
+
+</div>
