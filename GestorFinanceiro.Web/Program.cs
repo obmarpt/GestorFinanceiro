@@ -7,6 +7,24 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 
+builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
+{
+    var baseUrl = sp.GetRequiredService<IConfiguration>()["ApiBaseUrl"]
+        ?? "http://localhost:5281";
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+})
+.ConfigurePrimaryHttpMessageHandler(sp =>
+{
+    var handler = new HttpClientHandler();
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    if (env.IsDevelopment())
+    {
+        handler.ServerCertificateCustomValidationCallback =
+            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+    }
+    return handler;
+});
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));

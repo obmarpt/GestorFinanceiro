@@ -1,0 +1,111 @@
+@page "{sessaoId:int}"
+@model GestorFinanceiro.Web.Pages.Receita.IndexModel
+
+@{
+    ViewData["Title"] = "Receitas";
+    var total = Model.Receitas.Sum(r => r.Valor);
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Receitas</h1>
+            <p class="subtitle">@Model.SessaoNome</p>
+        </div>
+        <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">➕ Nova Receita</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+    else if (Model.Receitas.Any())
+    {
+        <div class="summary-cards summary-cards--compact mb-4">
+            <div class="summary-card summary-card--receitas">
+                <span class="summary-label">Total nesta sessão</span>
+                <div class="value value--hero">@total.ToString("N2") €</div>
+            </div>
+            <div class="summary-card summary-card--sessions">
+                <span class="summary-label">Registos</span>
+                <div class="value value--hero">@Model.Receitas.Count</div>
+            </div>
+        </div>
+    }
+
+    <div class="sessions-card section-block">
+
+        @if (!Model.Receitas.Any() && string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">💰</div>
+                <p>Sem dados disponíveis. Ainda não existem receitas nesta sessão.</p>
+                <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">Registar primeira receita</a>
+            </div>
+        }
+        else if (Model.Receitas.Any())
+        {
+            <div class="record-cards">
+                @foreach (var receita in Model.Receitas)
+                {
+                    <div class="record-card record-card--receita">
+                        <div class="record-card-body">
+                            <h3 class="record-title">@receita.Descricao</h3>
+                            <span class="record-date">@receita.Data.ToString("dd/MM/yyyy")</span>
+                            <div class="record-amount amount-positive">@receita.Valor.ToString("N2") €</div>
+                        </div>
+                        <div class="record-card-actions">
+                            <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@receita.Id"
+                               class="btn-app btn-app-sm btn-app-outline">Editar</a>
+                            <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@receita.Id"
+                               class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="mt-4">
+                <h2 class="section-title section-title--sm">Vista em tabela</h2>
+                <div class="table-responsive">
+                    <table class="table table-app align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                                <th>Data</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var receita in Model.Receitas)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@receita.Descricao</td>
+                                    <td class="amount-positive fw-semibold">@receita.Valor.ToString("N2") €</td>
+                                    <td>@receita.Data.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end table-actions">
+                                        <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@receita.Id"
+                                           class="btn-app btn-app-sm btn-app-outline me-1">Editar</a>
+                                        <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@receita.Id"
+                                           class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <div class="mt-3 d-flex gap-3 flex-wrap">
+        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
+        <a asp-page="/SessaoFinanceira/Index" class="back-link">Todas as sessões</a>
+    </div>
+
+</div>
+

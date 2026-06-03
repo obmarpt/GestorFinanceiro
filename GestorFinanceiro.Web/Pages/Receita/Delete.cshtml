@@ -1,0 +1,46 @@
+@page "{sessaoId:int}/{id:int}"
+@model GestorFinanceiro.Web.Pages.Receita.DeleteModel
+
+@{
+    ViewData["Title"] = "Eliminar Receita";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <h2>Eliminar Receita</h2>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+        else
+        {
+            <div class="alert alert-app alert-app-warning">
+                Tens a certeza que queres eliminar esta receita?
+            </div>
+
+            <dl class="row mb-4">
+                <dt class="col-sm-4 text-muted">Descrição</dt>
+                <dd class="col-sm-8 fw-semibold">@Model.Descricao</dd>
+
+                <dt class="col-sm-4 text-muted">Valor</dt>
+                <dd class="col-sm-8 text-success fw-semibold">@Model.Valor.ToString("N2") €</dd>
+
+                <dt class="col-sm-4 text-muted">Data</dt>
+                <dd class="col-sm-8">@Model.Data.ToString("dd/MM/yyyy")</dd>
+            </dl>
+
+            <form method="post" class="form-actions">
+                <button type="submit" class="btn-app btn-app-danger">Eliminar</button>
+                <a asp-page="Index" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-secondary">Cancelar</a>
+            </form>
+        }
+
+    </div>
+
+</div>
+

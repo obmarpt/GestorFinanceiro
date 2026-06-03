@@ -65,6 +65,7 @@ namespace GestorFinanceiro.Web.Pages
             // criar claims
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, utilizador.Id.ToString()),
                 new Claim(ClaimTypes.Name, utilizador.Username),
                 new Claim(ClaimTypes.Email, utilizador.Email)
             };
