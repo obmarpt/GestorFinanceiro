@@ -1,0 +1,202 @@
+@page
+@model GestorFinanceiro.Web.Pages.Dashboard.IndexModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="dashboard-container dashboard-layout">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Bem-vindo, @Model.Username</h1>
+            <p class="subtitle">Painel financeiro</p>
+        </div>
+        <div class="dashboard-header-actions">
+            <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
+            @if (Model.ResumoPorSessao.Count >= 2)
+            {
+                <a asp-page="/Transferencia/Transferir" class="btn-app btn-app-primary">⇄ Transferir</a>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+
+    <section class="section-block section-block--kpi">
+        <h2 class="section-title">Visão geral</h2>
+        <div class="summary-cards summary-cards--kpi">
+            <div class="kpi-card kpi-card--sessions">
+                <div class="kpi-card-header">
+                    <span class="kpi-label">Sessões</span>
+                    <span class="kpi-icon" aria-hidden="true">📊</span>
+                </div>
+                <div class="kpi-value">@Model.TotalSessoes</div>
+            </div>
+            <div class="kpi-card kpi-card--receitas">
+                <div class="kpi-card-header">
+                    <span class="kpi-label">Receitas</span>
+                    <span class="kpi-icon" aria-hidden="true">↑</span>
+                </div>
+                <div class="kpi-value">@Model.TotalReceitas.ToString("N2")<span class="kpi-currency">€</span></div>
+            </div>
+            <div class="kpi-card kpi-card--despesas">
+                <div class="kpi-card-header">
+                    <span class="kpi-label">Despesas</span>
+                    <span class="kpi-icon" aria-hidden="true">↓</span>
+                </div>
+                <div class="kpi-value">@Model.TotalDespesas.ToString("N2")<span class="kpi-currency">€</span></div>
+            </div>
+            <div class="kpi-card kpi-card--saldo @(Model.Saldo >= 0 ? "kpi-card--saldo-pos" : "kpi-card--saldo-neg")">
+                <div class="kpi-card-header">
+                    <span class="kpi-label">Saldo</span>
+                    <span class="kpi-icon" aria-hidden="true">€</span>
+                </div>
+                <div class="kpi-value">@Model.Saldo.ToString("N2")<span class="kpi-currency">€</span></div>
+            </div>
+        </div>
+    </section>
+
+    @if (Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        var origemTransferencia = Model.SessaoComMaiorSaldo;
+        var sessaoInvestimentoId = Model.EncontrarSessaoId("invest");
+
+        <section class="section-block section-block--saldo">
+            <div class="saldo-hero @(Model.Saldo >= 0 ? "saldo-hero--positivo" : "saldo-hero--negativo")">
+                <span class="saldo-hero-label">Saldo global disponível</span>
+                <div class="saldo-hero-valor">@Model.Saldo.ToString("N2")<span class="saldo-hero-moeda">€</span></div>
+                <p class="saldo-hero-hint">
+                    @(Model.Saldo >= 0 ? "Tens saldo positivo nas tuas sessões." : "As despesas superam as receitas.")
+                </p>
+
+                @if (Model.ResumoPorSessao.Count >= 2)
+                {
+                    var origemId = origemTransferencia?.SessaoId;
+                    var valorTransferencia = origemTransferencia?.Saldo;
+                    int? destinoInvestId = sessaoInvestimentoId;
+                    if (origemId.HasValue && sessaoInvestimentoId == origemId)
+                    {
+                        destinoInvestId = null;
+                    }
+
+                    <div class="saldo-hero-acoes">
+                        <a asp-page="/Transferencia/Transferir"
+                           asp-route-origemId="@origemId"
+                           asp-route-valor="@valorTransferencia"
+                           class="btn-app btn-app-primary saldo-hero-btn">
+                            Transferir
+                        </a>
+                        <a asp-page="/Transferencia/Transferir"
+                           asp-route-origemId="@origemId"
+                           asp-route-destinoId="@destinoInvestId"
+                           asp-route-valor="@valorTransferencia"
+                           class="btn-app btn-app-success saldo-hero-btn">
+                            Investir
+                        </a>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @if (Model.ResumoPorSessao.Any())
+    {
+        <section class="section-block section-block--chart">
+            <div class="chart-box">
+                <div class="chart-box-heading">
+                    <h2 class="chart-title">Receitas vs Despesas</h2>
+                    <p class="chart-box-subtitle">Comparativo por sessão ou totais agregados</p>
+                </div>
+
+                @if (Model.TemDadosGraficos)
+                {
+                    <div class="chart-box-inner">
+                        <div class="chart-toolbar">
+                            <div class="chart-control">
+                                <label for="chartSessaoSelect" class="chart-control-label">Sessão</label>
+                                <select id="chartSessaoSelect" class="form-control chart-select">
+                                    <option value="todas">Todas</option>
+                                    @foreach (var r in Model.ResumoPorSessao)
+                                    {
+                                        <option value="@r.SessaoId">@r.Nome</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="chart-box-body">
+                            <canvas id="chartReceitasDespesas"></canvas>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state empty-state--compact">
+                        <p>Sem movimentos financeiros para mostrar no gráfico.</p>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="section-block section-block--sessions">
+        <div class="sessions-header">
+            <h2 class="section-title mb-0">As minhas sessões</h2>
+            @if (Model.ResumoPorSessao.Any())
+            {
+                <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-sm btn-app-outline">Ver todas</a>
+            }
+        </div>
+
+        @if (!Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="empty-state">
+                <p>Sem sessões criadas. Começa por criar a tua primeira sessão financeira.</p>
+                <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">Criar sessão</a>
+            </div>
+        }
+        else if (Model.ResumoPorSessao.Any())
+        {
+            <div class="sessoes-grid sessoes-grid--dashboard">
+                @foreach (var r in Model.ResumoPorSessao)
+                {
+                    var saldoClass = r.Saldo > 0 ? "sessao-card--positivo" : r.Saldo < 0 ? "sessao-card--negativo" : "sessao-card--zero";
+                    var valorClass = r.Saldo > 0 ? "sessao-card-valor--positivo" : r.Saldo < 0 ? "sessao-card-valor--negativo" : "sessao-card-valor--zero";
+
+                    <article class="sessao-card sessao-card--dashboard @saldoClass">
+                        <div class="sessao-card-header">
+                            <h3 class="sessao-card-nome">@r.Nome</h3>
+                            <time class="sessao-card-data" datetime="@r.DataCriacao.ToString("yyyy-MM-dd")">
+                                @r.DataCriacao.ToString("dd MMM yyyy")
+                            </time>
+                        </div>
+
+                        <div class="sessao-card-valor @valorClass">@r.Saldo.ToString("N2") €</div>
+
+                        <div class="sessao-card-actions">
+                            <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@r.SessaoId"
+                               class="btn-app btn-app-primary btn-app-open">Abrir →</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+</div>
+
+@if (Model.TemDadosGraficos)
+{
+    @section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            window.dashboardChartData = @Html.Raw(Model.ChartDataJson);
+        </script>
+        <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
+    }
+}

@@ -1,0 +1,87 @@
+@page "/Account/Settings"
+@model GestorFinanceiro.Web.Pages.Account.SettingsModel
+
+@{
+    ViewData["Title"] = "Definições";
+    var initials = string.IsNullOrEmpty(Model.Nome) ? "?" : (Model.Nome.Length >= 2 ? Model.Nome[..2] : Model.Nome).ToUpper();
+}
+
+<div class="dashboard-container settings-page">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Definições</h1>
+            <p class="subtitle">Atualiza os teus dados de conta</p>
+        </div>
+        <a asp-page="/Account/Profile" class="btn-app btn-app-secondary btn-app-sm">← Perfil</a>
+    </div>
+
+    <div class="settings-card">
+        <div class="settings-hero">
+            @if (!string.IsNullOrEmpty(Model.ImagemPerfil))
+            {
+                <img src="@Model.ImagemPerfil" alt="Avatar" class="profile-avatar-img settings-avatar-img" />
+            }
+            else
+            {
+                <div class="settings-avatar">@initials</div>
+            }
+            <h2 class="settings-display-name">@Model.Nome</h2>
+            <p class="settings-display-email">@Model.Email</p>
+        </div>
+
+        <form method="post" class="settings-form form-app">
+            @if (!string.IsNullOrEmpty(Model.MensagemErro))
+            {
+                <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+            }
+
+            <section class="settings-section">
+                <h3 class="settings-section-title">Perfil</h3>
+                <div class="settings-fields">
+                    <div class="field-group">
+                        <label asp-for="Nome" class="form-label">Nome</label>
+                        <input asp-for="Nome" class="form-control settings-input" />
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="Username" class="form-label">Username</label>
+                        <input asp-for="Username" class="form-control settings-input" />
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control settings-input" type="email" />
+                    </div>
+                </div>
+            </section>
+
+            <hr class="settings-divider" />
+
+            <section class="settings-section">
+                <h3 class="settings-section-title">Segurança</h3>
+                <p class="settings-section-hint">Deixa em branco para manter a password atual.</p>
+                <div class="settings-fields">
+                    <div class="field-group">
+                        <label asp-for="NovaPassword" class="form-label">Nova password</label>
+                        <input asp-for="NovaPassword" class="form-control settings-input" type="password" autocomplete="new-password" />
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="ConfirmarPassword" class="form-label">Confirmar password</label>
+                        <input asp-for="ConfirmarPassword" class="form-control settings-input" type="password" autocomplete="new-password" />
+                    </div>
+                </div>
+            </section>
+
+            <div class="settings-actions">
+                <button type="submit" class="btn-app btn-app-primary settings-btn-save">Guardar alterações</button>
+                <a asp-page="/Account/Profile" class="btn-app btn-app-secondary settings-btn-cancel">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

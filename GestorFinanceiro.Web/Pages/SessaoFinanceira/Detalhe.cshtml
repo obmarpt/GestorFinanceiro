@@ -1,0 +1,96 @@
+@page "{id:int}"
+@model GestorFinanceiro.Web.Pages.SessaoFinanceira.DetalheModel
+
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">@Model.Nome</h1>
+            <p class="subtitle">@(Model.Descricao ?? "Detalhe da sessão") · @Model.DataCriacao.ToString("dd/MM/yyyy")</p>
+        </div>
+        <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary btn-app-sm">← Sessões</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+    else
+    {
+        <div class="summary-cards summary-cards--hero mb-4">
+            <div class="summary-card summary-card--receitas">
+                <span class="summary-label">Receitas</span>
+                <div class="value value--hero">@Model.TotalReceitas.ToString("N2") €</div>
+            </div>
+            <div class="summary-card summary-card--despesas">
+                <span class="summary-label">Despesas</span>
+                <div class="value value--hero">@Model.TotalDespesas.ToString("N2") €</div>
+            </div>
+            <div class="summary-card summary-card--saldo">
+                <span class="summary-label">Saldo</span>
+                <div class="value value--hero @(Model.Saldo >= 0 ? "positive" : "negative")">
+                    @Model.Saldo.ToString("N2") €
+                </div>
+            </div>
+        </div>
+
+        <div class="detail-actions mb-4">
+            <a asp-page="/Receita/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-success">Receitas</a>
+            <a asp-page="/Despesa/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-danger">Despesas</a>
+            @if (Model.Saldo > 0)
+            {
+                <a asp-page="/Transferencia/Transferir" asp-route-origemId="@Model.Id" asp-route-valor="@Model.Saldo"
+                   class="btn-app btn-app-primary">Transferir saldo</a>
+            }
+        </div>
+
+        <div class="detail-grid">
+            <div class="sessions-card">
+                <h2 class="section-title section-title--sm">Últimas receitas</h2>
+                @if (Model.Receitas.Any())
+                {
+                    <ul class="detail-list">
+                        @foreach (var r in Model.Receitas)
+                        {
+                            <li>
+                                <span>@r.Descricao</span>
+                                <strong class="amount-positive">@r.Valor.ToString("N2") €</strong>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Sem receitas registadas.</p>
+                }
+            </div>
+
+            <div class="sessions-card">
+                <h2 class="section-title section-title--sm">Últimas despesas</h2>
+                @if (Model.Despesas.Any())
+                {
+                    <ul class="detail-list">
+                        @foreach (var d in Model.Despesas)
+                        {
+                            <li>
+                                <span>@d.Descricao</span>
+                                <strong class="amount-negative">@d.Valor.ToString("N2") €</strong>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Sem despesas registadas.</p>
+                }
+            </div>
+        </div>
+    }
+
+</div>

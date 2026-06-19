@@ -1,0 +1,93 @@
+@page "/Account/Profile"
+@model GestorFinanceiro.Web.Pages.Account.ProfileModel
+
+@{
+    ViewData["Title"] = "Perfil";
+    var initials = string.IsNullOrEmpty(Model.Nome) ? "?" : (Model.Nome.Length >= 2 ? Model.Nome[..2] : Model.Nome).ToUpper();
+}
+
+<div class="dashboard-container profile-page">
+
+    <partial name="_StatusMessages" />
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+
+    @if (string.IsNullOrEmpty(Model.MensagemErro) || Model.EditMode)
+    {
+        <div class="dashboard-header">
+            <div>
+                <h1 class="page-title">Perfil</h1>
+                <p class="subtitle">Os teus dados de conta</p>
+            </div>
+            <a asp-page="/Account/Settings" class="btn-app btn-app-secondary btn-app-sm">Definições</a>
+        </div>
+
+        <div class="profile-card" id="profileCard" data-edit-mode="@(Model.EditMode ? "true" : "false")">
+            <div class="profile-hero">
+                @if (!string.IsNullOrEmpty(Model.ImagemPerfil))
+                {
+                    <img src="@Model.ImagemPerfil" alt="Avatar" class="profile-avatar-img" id="profileAvatar" />
+                }
+                else
+                {
+                    <div class="profile-avatar-large" id="profileAvatar">@initials</div>
+                }
+                <h2 class="profile-name">@Model.Nome</h2>
+                <p class="profile-handle">@@@Model.Username</p>
+            </div>
+
+            <div class="profile-body">
+                <form method="post" enctype="multipart/form-data" asp-page-handler="Imagem" class="profile-upload-form">
+                    <label class="form-label">Alterar foto de perfil</label>
+                    <div class="profile-upload-row">
+                        <input type="file" asp-for="ImagemUpload" class="form-control" accept="image/jpeg,image/png,image/webp" />
+                        <button type="submit" class="btn-app btn-app-sm btn-app-outline">Guardar foto</button>
+                    </div>
+                </form>
+
+                <hr class="settings-divider" />
+
+                <div id="profileView" class="profile-mode @(Model.EditMode ? "profile-mode--hidden" : "")">
+                    <dl class="profile-details">
+                        <div class="profile-row"><dt>Nome</dt><dd>@Model.Nome</dd></div>
+                        <div class="profile-row"><dt>Username</dt><dd>@Model.Username</dd></div>
+                        <div class="profile-row"><dt>Email</dt><dd>@Model.Email</dd></div>
+                        <div class="profile-row"><dt>Função</dt><dd>@Model.Role</dd></div>
+                    </dl>
+                    <div class="profile-actions">
+                        <button type="button" id="btnEditProfile" class="btn-app btn-app-primary profile-btn-edit">Editar Perfil</button>
+                        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Voltar</a>
+                    </div>
+                </div>
+
+                <form method="post" id="profileEdit" class="profile-mode form-app @(Model.EditMode ? "" : "profile-mode--hidden")">
+                    <div class="field-group">
+                        <label asp-for="Nome" class="form-label">Nome</label>
+                        <input asp-for="Nome" class="form-control" data-profile-field data-original-value="@Model.Nome" />
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="Username" class="form-label">Username</label>
+                        <input asp-for="Username" class="form-control" data-profile-field data-original-value="@Model.Username" />
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control" type="email" data-profile-field data-original-value="@Model.Email" />
+                    </div>
+                    <div class="profile-actions profile-actions--edit">
+                        <button type="submit" class="btn-app btn-app-success">Guardar</button>
+                        <button type="button" id="btnCancelEdit" class="btn-app btn-app-secondary">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/profile.js" asp-append-version="true"></script>
+}

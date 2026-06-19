@@ -5,68 +5,63 @@
     ViewData["Title"] = "Login";
 }
 
-<style>
-    body {
-        background-color: #f5f5f5;
-    }
-</style>
+<div class="auth-page">
+    <div class="auth-layout">
+        <aside class="auth-brand" aria-label="Apresentação">
+            <div class="auth-brand-inner">
+                <a asp-page="/Index" class="auth-brand-logo">
+                    <span class="auth-brand-icon" aria-hidden="true">💰</span>
+                    <span>GestorFinanceiro</span>
+                </a>
+                <h1 class="auth-brand-title">Controla as tuas finanças de forma simples</h1>
+                <p class="auth-brand-text">
+                    Organiza receitas e despesas por sessões, acompanha o saldo global e visualiza
+                    a evolução do teu dinheiro num painel claro e intuitivo.
+                </p>
+                <ul class="auth-brand-features">
+                    <li>Dashboard com visão geral</li>
+                    <li>Sessões financeiras flexíveis</li>
+                    <li>Transferências entre contas</li>
+                </ul>
+            </div>
+        </aside>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
+        <div class="auth-panel">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <h2 class="auth-card-title">Bem-vindo de volta</h2>
+                    <p class="auth-card-subtitle">Inicia sessão na tua conta</p>
+                </div>
 
-            <div class="card shadow">
-                <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.MensagemErro))
+                {
+                    <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+                }
 
-                    <h3 class="text-center mb-4">Login</h3>
+                @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
+                {
+                    <div class="alert alert-app alert-app-success">@Model.MensagemSucesso</div>
+                }
 
-                    <!-- ❌ ERRO -->
-                    <!-- Mensagem de erro-->
-                    @if (!string.IsNullOrEmpty(Model.MensagemErro))
-                    {
-                        <div class="alert alert-danger">
-                            @Model.MensagemErro
-                        </div>
-                    }
-
-                    <!-- ✅ SUCESSO -->
-                    <!-- Mensagem de sucesso-->
-                    @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
-                    {
-                        <div class="alert alert-success">
-                            @Model.MensagemSucesso
-                        </div>
-                    }
-
-                    <form method="post">
-
-                        <!-- ✅ USERNAME OU EMAIL -->
-                        <div class="form-group mb-3">
-                            <label>Username ou Email</label>
-                            <input asp-for="LoginInput" class="form-control" placeholder="Introduza username ou email" />
-                        </div>
-
-                        <!-- ✅ PASSWORD -->
-                        <div class="form-group mb-3">
-                            <label>Password</label>
-                            <input asp-for="Password" type="password" class="form-control" />
-                        </div>
-
-                        <!-- ✅ BOTÃO -->
-                        <button type="submit" class="btn btn-primary w-100">
-                            Entrar
-                        </button>
-
-                    </form>
-
-                    <!-- ✅ LINK PARA REGISTO -->
-                    <div class="text-center mt-3">
-                        /RegisterCriar conta</a>
+                <form method="post" class="form-app auth-form">
+                    <div class="field-group">
+                        <label asp-for="LoginInput" class="form-label">Username ou email</label>
+                        <input asp-for="LoginInput" class="form-control" placeholder="Introduz o teu username ou email" autocomplete="username" />
                     </div>
 
-                </div>
-            </div>
+                    <div class="field-group">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Introduz a tua password" autocomplete="current-password" />
+                    </div>
 
+                    <button type="submit" class="btn-app btn-app-primary auth-btn-submit">Entrar</button>
+                </form>
+
+                <p class="auth-footer">
+                    Ainda não tens conta?
+                    <a asp-page="/Register" class="auth-link">Criar conta gratuitamente</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>

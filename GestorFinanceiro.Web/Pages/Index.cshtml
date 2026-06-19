@@ -1,60 +1,73 @@
 ﻿@page
 @model GestorFinanceiro.Web.Pages.IndexModel
 
-<div class="dashboard-container">
+@{
+    ViewData["Title"] = "Início";
+    Layout = "_Layout";
+}
 
-    <!-- ✅ HEADER -->
-    <div class="dashboard-header">
-        <h2>Bem-vindo, @Model.Username 👋</h2>
+<div class="landing-page">
+    <section class="landing-hero">
+        <div class="landing-hero-inner">
+            <span class="landing-badge">Gestão financeira pessoal</span>
+            <h1 class="landing-title">Controla as tuas finanças de forma simples</h1>
+            <p class="landing-subtitle">
+                Organiza receitas e despesas por sessões, acompanha o teu saldo e toma melhores
+                decisões — tudo num só lugar.
+            </p>
+            <div class="landing-hero-actions">
+                <a asp-page="/Login" class="btn-app btn-app-primary btn-app-lg landing-btn-primary">Começar agora</a>
+                <a asp-page="/Register" class="btn-app btn-app-outline btn-app-lg landing-btn-secondary">Criar conta</a>
+            </div>
+        </div>
+    </section>
 
-        <div>
-            /Logout
-            Logout
-        </a>
-    </div>
-</div>
+    <section class="landing-features">
+        <div class="landing-features-inner">
+            <h2 class="landing-section-title">Tudo o que precisas para gerir o teu dinheiro</h2>
+            <p class="landing-section-subtitle">Funcionalidades pensadas para o dia a dia financeiro</p>
 
-<!-- ✅ BOTÃO -->
-<a asp-page="/SessaoFinanceira/Create" class="btn-custom mb-4">
-    ➕ Nova Sessão
-</a>
+            <div class="landing-features-grid">
+                <article class="landing-feature-card">
+                    <span class="landing-feature-icon landing-feature-icon--dashboard" aria-hidden="true">📊</span>
+                    <h3 class="landing-feature-title">Dashboard</h3>
+                    <p class="landing-feature-text">
+                        Visão geral clara com saldo, receitas, despesas e sessões num painel centralizado.
+                    </p>
+                </article>
 
-<!-- ✅ RESUMO -->
-<div class="summary-cards">
+                <article class="landing-feature-card">
+                    <span class="landing-feature-icon landing-feature-icon--movimentos" aria-hidden="true">↕</span>
+                    <h3 class="landing-feature-title">Receitas e despesas</h3>
+                    <p class="landing-feature-text">
+                        Regista entradas e saídas por sessão financeira e mantém o controlo detalhado.
+                    </p>
+                </article>
 
-    <div class="summary-card">
-        <h6>Receitas</h6>
-        <div class="value text-success">0 €</div>
-    </div>
+                <article class="landing-feature-card">
+                    <span class="landing-feature-icon landing-feature-icon--transfer" aria-hidden="true">⇄</span>
+                    <h3 class="landing-feature-title">Transferências</h3>
+                    <p class="landing-feature-text">
+                        Move saldo entre sessões — por exemplo, para poupança ou investimentos.
+                    </p>
+                </article>
 
-    <div class="summary-card">
-        <h6>Despesas</h6>
-        <div class="value text-danger">0 €</div>
-    </div>
+                <article class="landing-feature-card">
+                    <span class="landing-feature-icon landing-feature-icon--chart" aria-hidden="true">📈</span>
+                    <h3 class="landing-feature-title">Análise financeira</h3>
+                    <p class="landing-feature-text">
+                        Gráficos comparativos de receitas vs despesas para perceberes a evolução do teu dinheiro.
+                    </p>
+                </article>
+            </div>
+        </div>
+    </section>
 
-    <div class="summary-card">
-        <h6>Saldo</h6>
-        <div class="value text-primary">0 €</div>
-    </div>
-
-</div>
-
-<!-- ✅ SESSÕES -->
-<div class="sessions-card">
-
-    <div class="sessions-header">
-        <h5>As Minhas Sessões</h5>
-
-        <a asp-page="/SessaoFinanceira/Create" class="btn-custom">
-            + Criar
-        </a>
-    </div>
-
-    <div class="sessions-empty">
-        <p>Ainda não tens sessões criadas.</p>
-        <a asp-page="/SessaoFinanceira/Index" class="btn-custom">Ver sessões</a>
-    </div>
-
-</div>
-
+    <section class="landing-cta">
+        <div class="landing-cta-inner">
+            <h2 class="landing-cta-title">Pronto para começar?</h2>
+            <p class="landing-cta-text">Cria a tua conta gratuitamente e organiza as tuas finanças hoje.</p>
+            <a asp-page="/Register" class="btn-app btn-app-success btn-app-lg landing-btn-cta">Criar conta</a>
+        </div>
+    </section>
 </div>

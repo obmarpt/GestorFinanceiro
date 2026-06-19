@@ -1,0 +1,63 @@
+@page
+@model GestorFinanceiro.Web.Pages.Transferencia.TransferirModel
+
+@{
+    ViewData["Title"] = "Transferir Saldo";
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Transferir saldo</h1>
+            <p class="subtitle">Cria despesa na origem e receita no destino</p>
+        </div>
+        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+
+        @if (Model.Resumos.Count >= 2)
+        {
+            <form method="post" class="form-app">
+                <div class="field-group">
+                    <label asp-for="SessaoOrigemId" class="form-label">Sessão de origem</label>
+                    <select asp-for="SessaoOrigemId" asp-items="Model.SessoesOrigem" class="form-control"></select>
+                    @if (Model.SaldoOrigem.HasValue)
+                    {
+                        <small class="form-hint">Saldo disponível: <strong>@Model.SaldoOrigem.Value.ToString("N2") €</strong></small>
+                    }
+                </div>
+                <div class="field-group">
+                    <label asp-for="SessaoDestinoId" class="form-label">Sessão de destino</label>
+                    <select asp-for="SessaoDestinoId" asp-items="Model.SessoesDestino" class="form-control"></select>
+                </div>
+                <div class="field-group">
+                    <label asp-for="Valor" class="form-label">Valor (€)</label>
+                    <input asp-for="Valor" class="form-control" type="number" step="0.01" min="0.01" />
+                </div>
+                <div class="field-group">
+                    <label asp-for="Descricao" class="form-label">Descrição (opcional)</label>
+                    <input asp-for="Descricao" class="form-control" />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-app btn-app-success">Transferir</button>
+                    <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
+                </div>
+            </form>
+        }
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
