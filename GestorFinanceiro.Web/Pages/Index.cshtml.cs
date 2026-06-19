@@ -1,16 +1,16 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace GestorFinanceiro.Web.Pages
 {
-    [Authorize]
     public class IndexModel : PageModel
     {
-        public string Username { get; set; } = "";
-
-        public void OnGet()
+        public IActionResult OnGet()
         {
-            Username = User.Identity?.Name ?? "Utilizador";
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToPage("/Dashboard/Index");
+
+            return Page();
         }
     }
 }

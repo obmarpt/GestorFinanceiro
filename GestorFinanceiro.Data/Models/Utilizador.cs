@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace GestorFinanceiro.Data.Models
 {
@@ -7,10 +8,8 @@ namespace GestorFinanceiro.Data.Models
     {
         public int Id { get; set; }
 
-
         [Required]
-        public string Username { get; set; } = string.Empty; // ✅ novo
-
+        public string Username { get; set; } = string.Empty;
 
         [Required]
         public string Nome { get; set; } = string.Empty;
@@ -24,6 +23,9 @@ namespace GestorFinanceiro.Data.Models
         [Required]
         public string Role { get; set; } = "Utilizador";
 
+        public string? ImagemPerfil { get; set; }
+
+        [JsonIgnore]
         public ICollection<SessaoFinanceira> SessoesFinanceiras { get; set; }
             = new List<SessaoFinanceira>();
     }

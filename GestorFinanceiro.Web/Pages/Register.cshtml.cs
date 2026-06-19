@@ -16,58 +16,69 @@ namespace GestorFinanceiro.Web.Pages
         }
 
         [BindProperty]
-        public string Email { get; set; }
+        public string Nome { get; set; } = string.Empty;
 
         [BindProperty]
-        public string Password { get; set; }
+        public string Username { get; set; } = string.Empty;
 
         [BindProperty]
-        public string ConfirmPassword { get; set; }
+        public string Email { get; set; } = string.Empty;
 
-        public string MensagemErro { get; set; }
-        public string MensagemSucesso { get; set; }
+        [BindProperty]
+        public string Password { get; set; } = string.Empty;
+
+        [BindProperty]
+        public string ConfirmPassword { get; set; } = string.Empty;
+
+        public string? MensagemErro { get; set; }
+        public string? MensagemSucesso { get; set; }
+
+        public IActionResult OnGet()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToPage("/Dashboard/Index");
+
+            return Page();
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // ✅ 1. Validar campos vazios
-            if (string.IsNullOrWhiteSpace(Email) ||
-                string.IsNullOrWhiteSpace(Password) ||
-                string.IsNullOrWhiteSpace(ConfirmPassword))
+            if (string.IsNullOrWhiteSpace(Nome) || string.IsNullOrWhiteSpace(Username) ||
+                string.IsNullOrWhiteSpace(Email) || string.IsNullOrWhiteSpace(Password))
             {
                 MensagemErro = "Preencha todos os campos.";
                 return Page();
             }
 
-            // ✅ 2. Validar passwords
             if (Password != ConfirmPassword)
             {
                 MensagemErro = "As passwords não coincidem.";
                 return Page();
             }
 
-            // ✅ 3. Verificar se email já existe
-            bool existe = await _context.Utilizadores
-                .AnyAsync(u => u.Email == Email);
-
-            if (existe)
+            if (await _context.Utilizadores.AnyAsync(u => u.Email == Email))
             {
                 MensagemErro = "Já existe uma conta com este email.";
                 return Page();
             }
 
-            // ✅ 4. Criar utilizador
-            var utilizador = new Utilizador
+            if (await _context.Utilizadores.AnyAsync(u => u.Username == Username))
             {
-                Email = Email,
-                PasswordHash = Password // ⚠️ depois vamos fazer hash
-            };
+                MensagemErro = "Já existe uma conta com este username.";
+                return Page();
+            }
 
-            // ✅ 5. Guardar na BD
-            _context.Utilizadores.Add(utilizador);
+            _context.Utilizadores.Add(new Utilizador
+            {
+                Nome = Nome.Trim(),
+                Username = Username.Trim(),
+                Email = Email.Trim(),
+                PasswordHash = Password,
+                Role = "Utilizador"
+            });
+
             await _context.SaveChangesAsync();
-
-            MensagemSucesso = "Conta criada com sucesso!";
-
+            MensagemSucesso = "Conta criada com sucesso! Pode fazer login.";
             return Page();
         }
     }

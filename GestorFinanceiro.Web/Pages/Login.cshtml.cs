@@ -31,6 +31,14 @@ namespace GestorFinanceiro.Web.Pages
         public string MensagemErro { get; set; }
         public string MensagemSucesso { get; set; }
 
+        public IActionResult OnGet()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToPage("/Dashboard/Index");
+
+            return Page();
+        }
+
         public async Task<IActionResult> OnPostAsync()
         {
             // ✅ 1. Verificar campos vazios
@@ -84,7 +92,7 @@ namespace GestorFinanceiro.Web.Pages
                 claimsPrincipal);
 
             // ✅ redirecionar após login
-            return RedirectToPage("/Index");
+            return RedirectToPage("/Dashboard/Index");
         }
     }
 }

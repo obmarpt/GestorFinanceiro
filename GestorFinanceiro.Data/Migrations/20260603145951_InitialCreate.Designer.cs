@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestorFinanceiro.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260422142258_PrimeiroModeloGestaoFinanceira")]
-    partial class PrimeiroModeloGestaoFinanceira
+    [Migration("20260603145951_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -195,6 +195,9 @@ namespace GestorFinanceiro.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("ImagemPerfil")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -204,6 +207,10 @@ namespace GestorFinanceiro.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

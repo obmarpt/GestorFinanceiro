@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace GestorFinanceiro.Data.Models
 {
@@ -18,6 +19,8 @@ namespace GestorFinanceiro.Data.Models
 
         [Required]
         public int SessaoFinanceiraId { get; set; }
-        public SessaoFinanceira SessaoFinanceira { get; set; }
+
+        [JsonIgnore]
+        public SessaoFinanceira? SessaoFinanceira { get; set; }
     }
 }

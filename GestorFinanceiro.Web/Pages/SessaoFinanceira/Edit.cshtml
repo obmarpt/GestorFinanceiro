@@ -1,0 +1,51 @@
+@page "{id:int}"
+@model GestorFinanceiro.Web.Pages.SessaoFinanceira.EditModel
+
+@{
+    ViewData["Title"] = "Editar Sessão";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Editar sessão</h1>
+            <p class="subtitle">Atualizar nome e descrição</p>
+        </div>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+
+        <form method="post" class="form-app">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="field-group">
+                <label asp-for="Nome" class="form-label">Nome</label>
+                <input asp-for="Nome" class="form-control" placeholder="Ex: Finanças pessoais 2026" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Descricao" class="form-label">Descrição (opcional)</label>
+                <textarea asp-for="Descricao" class="form-control" rows="3"
+                          placeholder="Breve descrição da sessão"></textarea>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn-app btn-app-primary">Guardar</button>
+                <a asp-page="Index" class="btn-app btn-app-outline">Cancelar</a>
+            </div>
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

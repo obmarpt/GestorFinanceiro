@@ -5,67 +5,74 @@
     ViewData["Title"] = "Registo";
 }
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
+<div class="auth-page">
+    <div class="auth-layout">
+        <aside class="auth-brand" aria-label="Apresentação">
+            <div class="auth-brand-inner">
+                <a asp-page="/Index" class="auth-brand-logo">
+                    <span class="auth-brand-icon" aria-hidden="true">💰</span>
+                    <span>GestorFinanceiro</span>
+                </a>
+                <h1 class="auth-brand-title">Controla as tuas finanças de forma simples</h1>
+                <ul class="auth-brand-features auth-brand-features--register">
+                    <li>Gestão de receitas e despesas</li>
+                    <li>Dashboard visual</li>
+                    <li>Controlo de sessões financeiras</li>
+                </ul>
+            </div>
+        </aside>
 
-            <div class="card shadow">
-                <div class="card-body">
+        <div class="auth-panel">
+            <div class="auth-card auth-card--register">
+                <div class="auth-card-header">
+                    <h2 class="auth-card-title">Criar conta</h2>
+                    <p class="auth-card-subtitle">Cria a tua conta para começar</p>
+                </div>
 
-                    <h3 class="text-center mb-4">Criar Conta</h3>
+                @if (!string.IsNullOrEmpty(Model.MensagemErro))
+                {
+                    <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+                }
 
-                    <!-- ✅ Mensagem ERRO -->
-                    @if (!string.IsNullOrEmpty(Model.MensagemErro))
-                    {
-                        <div class="alert alert-danger">
-                            @Model.MensagemErro
-                        </div>
-                    }
+                @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
+                {
+                    <div class="alert alert-app alert-app-success">@Model.MensagemSucesso</div>
+                }
 
-                    <!-- ✅ Mensagem SUCESSO -->
-                    @if (!string.IsNullOrEmpty(Model.MensagemSucesso))
-                    {
-                        <div class="alert alert-success">
-                            @Model.MensagemSucesso
-                        </div>
-                    }
-
-                    <form method="post">
-
-                        <!-- ✅ EMAIL -->
-                        <div class="form-group mb-3">
-                            <label>Email</label>
-                            <input asp-for="Email" class="form-control" placeholder="Introduza o email" />
-                        </div>
-
-                        <!-- ✅ PASSWORD -->
-                        <div class="form-group mb-3">
-                            <label>Password</label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="Introduza a password" />
-                        </div>
-
-                        <!-- ✅ CONFIRM PASSWORD -->
-                        <div class="form-group mb-3">
-                            <label>Confirmar Password</label>
-                            <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirme a password" />
-                        </div>
-
-                        <!-- ✅ BOTÃO -->
-                        <button type="submit" class="btn btn-success w-100">
-                            Registar
-                        </button>
-
-                    </form>
-
-                    <!-- ✅ LINK PARA LOGIN -->
-                    <div class="text-center mt-3">
-                        <a href="/Login">Já tenho conta</a>
+                <form method="post" class="form-app auth-form auth-form--register">
+                    <div class="field-group">
+                        <label asp-for="Nome" class="form-label">Nome</label>
+                        <input asp-for="Nome" class="form-control auth-input" placeholder="O teu nome completo" autocomplete="name" />
                     </div>
 
-                </div>
-            </div>
+                    <div class="field-group">
+                        <label asp-for="Username" class="form-label">Username</label>
+                        <input asp-for="Username" class="form-control auth-input" placeholder="Escolhe um username" autocomplete="username" />
+                    </div>
 
+                    <div class="field-group">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control auth-input" type="email" placeholder="o.teu@email.com" autocomplete="email" />
+                    </div>
+
+                    <div class="field-group">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control auth-input" placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+                    </div>
+
+                    <div class="field-group">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirmar password</label>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control auth-input" placeholder="Repete a password" autocomplete="new-password" />
+                    </div>
+
+                    <button type="submit" class="btn-app btn-app-success auth-btn-submit auth-btn-register">Registar</button>
+                </form>
+
+                <p class="auth-footer">
+                    Já tens conta?
+                    <a asp-page="/Login" class="auth-link">Iniciar sessão</a>
+                </p>
+            </div>
         </div>
     </div>
 </div>
-``

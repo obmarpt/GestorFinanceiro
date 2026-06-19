@@ -1,102 +1,86 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - GestorFinanceiro</title>
-
-    <!-- ✅ Bootstrap -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-
-    <!-- ✅ CSS global -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-
-    <!-- ✅ NOVO CSS personalizado -->
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
-
+    <link rel="stylesheet" href="~/css/landing.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/auth.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/GestorFinanceiro.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
 
-    <!-- ✅ NAVBAR MODERNA -->
-    <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-            <div class="container">
+<header>
+    <nav class="navbar navbar-expand-lg navbar-app navbar-dark">
+        <div class="container-fluid navbar-app-inner">
+            <a class="navbar-brand" asp-page="/Index">
+                <span class="navbar-brand-icon">💰</span>
+                <span class="navbar-brand-text">GestorFinanceiro</span>
+            </a>
 
-                <a class="navbar-brand fw-bold" asp-page="/Index">
-                    💰 GestorFinanceiro
-                </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                    aria-controls="navbarMain" aria-expanded="false" aria-label="Menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
-
-                    <!-- ✅ Left Menu -->
-                    <ul class="navbar-nav">
-
+            <div class="collapse navbar-collapse navbar-app-collapse" id="navbarMain">
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    <ul class="navbar-nav navbar-app-nav">
                         <li class="nav-item">
-                            <a class="nav-link" asp-page="/Index">Dashboard</a>
+                            <a class="nav-link" asp-page="/Dashboard/Index">Dashboard</a>
                         </li>
-
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/SessaoFinanceira/Index">Sessões</a>
                         </li>
-
                     </ul>
 
-                    <!-- ✅ Right Side (LOGIN STATE) -->
-                    <ul class="navbar-nav">
-
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item me-3 text-white d-flex align-items-center">
-                                👤 @User.Identity.Name
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="btn btn-sm btn-danger" asp-page="/Logout">
-                                    Logout
-                                </a>
-                            </li>
+                    <div class="navbar-actions">
+                        @{
+                            var name = User.Identity.Name ?? "U";
+                            var initials = name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
                         }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-page="/Login">Login</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" asp-page="/Register">Registo</a>
-                            </li>
-                        }
-
-                    </ul>
-
-                </div>
+                        <div class="avatar-menu" id="avatarMenu">
+                            <button type="button" class="avatar-btn" id="avatarBtn" aria-expanded="false" aria-label="Menu do utilizador">
+                                <span class="avatar-initials">@initials</span>
+                            </button>
+                            <div class="avatar-dropdown" id="avatarDropdown">
+                                <a asp-page="/Account/Profile" class="avatar-dropdown-item">Perfil</a>
+                                <a asp-page="/Account/Settings" class="avatar-dropdown-item">Definições</a>
+                                <a asp-page="/Logout" class="avatar-dropdown-item avatar-dropdown-item--danger">Logout</a>
+                            </div>
+                        </div>
+                        <a asp-page="/Logout" class="btn-app btn-app-sm btn-app-logout">Logout</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="navbar-actions navbar-actions--guest">
+                        <a asp-page="/Login" class="nav-link text-white">Login</a>
+                        <a asp-page="/Register" class="btn-app btn-app-sm btn-app-outline-light">Registo</a>
+                    </div>
+                }
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
+</header>
 
-    <!-- ✅ MAIN CONTENT -->
-    <div class="container mt-4">
-        <main role="main">
-            @RenderBody()
-        </main>
-    </div>
+<main class="main-content">
+    @RenderBody()
+</main>
 
-    <!-- ✅ FOOTER MELHORADO -->
-    <footer class="text-center mt-5 mb-3 text-muted">
-        <small>&copy; 2026 - GestorFinanceiro</small>
-    </footer>
+<footer class="app-footer">
+    <small>&copy; 2026 GestorFinanceiro</small>
+</footer>
 
-    <!-- ✅ Scripts -->
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 
 </body>
 </html>
