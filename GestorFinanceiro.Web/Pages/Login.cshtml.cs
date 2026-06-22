@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
-// ✅ ADICIONAR ISTO
+// ✅ Autenticação
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,17 +19,17 @@ namespace GestorFinanceiro.Web.Pages
             _context = context;
         }
 
-        // ✅ Username OU Email
+        // ✅ Username ou Email
         [BindProperty]
-        public string LoginInput { get; set; }
+        public string LoginInput { get; set; } = string.Empty;
 
         // ✅ Password
         [BindProperty]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         // ✅ Mensagens
-        public string MensagemErro { get; set; }
-        public string MensagemSucesso { get; set; }
+        public string MensagemErro { get; set; } = string.Empty;
+        public string MensagemSucesso { get; set; } = string.Empty;
 
         public IActionResult OnGet()
         {
@@ -41,7 +41,7 @@ namespace GestorFinanceiro.Web.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // ✅ 1. Verificar campos vazios
+            // ✅ 1. Validar campos
             if (string.IsNullOrWhiteSpace(LoginInput) ||
                 string.IsNullOrWhiteSpace(Password))
             {
@@ -68,9 +68,7 @@ namespace GestorFinanceiro.Web.Pages
                 return Page();
             }
 
-            // ✅ 4. LOGIN REAL COM SESSÃO
-
-            // criar claims
+            // ✅ 4. Criar claims
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, utilizador.Id.ToString()),
@@ -78,20 +76,19 @@ namespace GestorFinanceiro.Web.Pages
                 new Claim(ClaimTypes.Email, utilizador.Email)
             };
 
-            // criar identidade
+            // ✅ 5. Criar identidade
             var claimsIdentity = new ClaimsIdentity(
                 claims,
                 CookieAuthenticationDefaults.AuthenticationScheme);
 
-            // criar principal
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-            // guardar cookie (login)
+            // ✅ 6. Login (cookie)
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 claimsPrincipal);
 
-            // ✅ redirecionar após login
+            // ✅ 7. Redirecionar
             return RedirectToPage("/Dashboard/Index");
         }
     }

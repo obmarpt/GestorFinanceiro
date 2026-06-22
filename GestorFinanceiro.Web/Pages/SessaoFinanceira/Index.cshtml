@@ -14,7 +14,11 @@
             <h1 class="page-title">Sessões</h1>
             <p class="subtitle">Gerir as tuas sessões financeiras</p>
         </div>
+        
         <a asp-page="Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
+    </div>
+    <div class="mt-3">
+        <a asp-page="/Dashboard/Index" class="back-link">← Dashboard</a>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.MensagemErro))
@@ -72,8 +76,5 @@
         </div>
     }
 
-    <div class="mt-3">
-        <a asp-page="/Dashboard/Index" class="back-link">← Dashboard</a>
-    </div>
 
 </div>
