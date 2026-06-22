@@ -16,7 +16,10 @@
             <p class="subtitle">@Model.SessaoNome</p>
         </div>
         <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">➕ Nova Receita</a>
-    </div>
+    </div>    <div class="mt-3 d-flex gap-3 flex-wrap">
+        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
+        <a asp-page="/SessaoFinanceira/Index" class="back-link">Todas as sessões</a>
+    </div>
 
     @if (!string.IsNullOrEmpty(Model.MensagemErro))
     {
@@ -100,12 +103,7 @@
             </div>
         }
 
-    </div>
-
-    <div class="mt-3 d-flex gap-3 flex-wrap">
-        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
-        <a asp-page="/SessaoFinanceira/Index" class="back-link">Todas as sessões</a>
-    </div>
+    </div>
 
 </div>
 
