@@ -85,5 +85,43 @@ namespace GestorFinanceiro.API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
+
+        [HttpPost("{id}/depositar")]
+        public async Task<IActionResult> Depositar(int id, [FromBody] MetaDepositarRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var meta = await _context.Metas.FindAsync(id);
+            if (meta == null)
+                return NotFound("Meta não encontrada.");
+
+            if (request.Valor <= 0)
+                return BadRequest("O valor deve ser maior que zero.");
+
+            meta.ValorAtual += request.Valor;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { mensagem = "Depósito registado com sucesso." });
+        }
+
+        [HttpPost("{id}/levantar")]
+        public async Task<IActionResult> Levantar(int id, [FromBody] MetaLevantarRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var meta = await _context.Metas.FindAsync(id);
+            if (meta == null)
+                return NotFound("Meta não encontrada.");
+
+            if (request.Valor > meta.ValorAtual)
+                return BadRequest($"Valor superior ao disponível na meta ({meta.ValorAtual:N2} €).");
+
+            meta.ValorAtual -= request.Valor;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { mensagem = "Levantamento registado com sucesso." });
+        }
     }
 }
