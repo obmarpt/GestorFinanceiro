@@ -29,11 +29,11 @@
             <form method="post" class="form-app">
                 <div class="field-group">
                     <label asp-for="SessaoOrigemId" class="form-label">Sessão de origem</label>
-                    <select asp-for="SessaoOrigemId" asp-items="Model.SessoesOrigem" class="form-control"></select>
-                    @if (Model.SaldoOrigem.HasValue)
-                    {
-                        <small class="form-hint">Saldo disponível: <strong>@Model.SaldoOrigem.Value.ToString("N2") €</strong></small>
-                    }
+                    <select asp-for="SessaoOrigemId" asp-items="Model.SessoesOrigem"
+                            class="form-control" id="SessaoOrigemId"></select>
+                    <small class="form-hint" id="saldo-hint" style="display:none">
+                        Saldo disponível: <strong id="saldo-valor"></strong>
+                    </small>
                 </div>
                 <div class="field-group">
                     <label asp-for="SessaoDestinoId" class="form-label">Sessão de destino</label>
@@ -60,4 +60,29 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        var saldos = {
+            @foreach (var r in Model.Resumos)
+            {
+                    @:@r.SessaoId: @r.Saldo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+            }
+        };
+
+        function atualizarSaldo() {
+            var id = parseInt(document.getElementById("SessaoOrigemId").value);
+            var hint = document.getElementById("saldo-hint");
+            var span = document.getElementById("saldo-valor");
+
+            if (saldos[id] !== undefined) {
+                span.textContent = saldos[id].toFixed(2).replace(".", ",") + " \u20AC";
+                hint.style.display = "block";
+            } else {
+                hint.style.display = "none";
+            }
+        }
+
+        document.getElementById("SessaoOrigemId").addEventListener("change", atualizarSaldo);
+        atualizarSaldo();
+    </script>
 }

@@ -17,6 +17,7 @@ namespace GestorFinanceiro.Data.Context
         public DbSet<Despesa> Despesas { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<SessaoFinanceiraCategoria> SessaoFinanceiraCategorias { get; set; }
+        public DbSet<Meta> Metas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +64,13 @@ namespace GestorFinanceiro.Data.Context
                 .HasOne(sc => sc.Categoria)
                 .WithMany(c => c.SessaoFinanceiraCategorias)
                 .HasForeignKey(sc => sc.CategoriaId);
+
+            // Utilizador -> Meta (1:N)
+            modelBuilder.Entity<Meta>()
+                .HasOne(m => m.Utilizador)
+                .WithMany()
+                .HasForeignKey(m => m.UtilizadorId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

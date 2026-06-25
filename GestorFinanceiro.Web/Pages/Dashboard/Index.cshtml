@@ -65,7 +65,6 @@
     @if (Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
     {
         var origemTransferencia = Model.SessaoComMaiorSaldo;
-        var sessaoInvestimentoId = Model.EncontrarSessaoId("invest");
 
         <section class="section-block section-block--saldo">
             <div class="saldo-hero @(Model.Saldo >= 0 ? "saldo-hero--positivo" : "saldo-hero--negativo")">
@@ -79,11 +78,6 @@
                 {
                     var origemId = origemTransferencia?.SessaoId;
                     var valorTransferencia = origemTransferencia?.Saldo;
-                    int? destinoInvestId = sessaoInvestimentoId;
-                    if (origemId.HasValue && sessaoInvestimentoId == origemId)
-                    {
-                        destinoInvestId = null;
-                    }
 
                     <div class="saldo-hero-acoes">
                         <a asp-page="/Transferencia/Transferir"
@@ -91,13 +85,6 @@
                            asp-route-valor="@valorTransferencia"
                            class="btn-app btn-app-primary saldo-hero-btn">
                             Transferir
-                        </a>
-                        <a asp-page="/Transferencia/Transferir"
-                           asp-route-origemId="@origemId"
-                           asp-route-destinoId="@destinoInvestId"
-                           asp-route-valor="@valorTransferencia"
-                           class="btn-app btn-app-success saldo-hero-btn">
-                            Investir
                         </a>
                     </div>
                 }
