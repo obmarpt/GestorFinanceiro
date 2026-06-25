@@ -33,6 +33,16 @@ namespace GestorFinanceiro.API.Controllers
             return Ok(meta);
         }
 
+        [HttpGet("movimentos")]
+        public async Task<IActionResult> GetMovimentos()
+        {
+            var movimentos = await _context.MetaMovimentos
+                .Include(m => m.Meta)
+                .OrderByDescending(m => m.Data)
+                .ToListAsync();
+            return Ok(movimentos);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] MetaRequest request)
         {
@@ -101,6 +111,14 @@ namespace GestorFinanceiro.API.Controllers
 
             meta.ValorAtual += request.Valor;
 
+            _context.MetaMovimentos.Add(new MetaMovimento
+            {
+                MetaId = id,
+                Tipo = "Deposito",
+                Valor = request.Valor,
+                Data = DateTime.Now
+            });
+
             await _context.SaveChangesAsync();
             return Ok(new { mensagem = "Depósito registado com sucesso." });
         }
@@ -119,6 +137,14 @@ namespace GestorFinanceiro.API.Controllers
                 return BadRequest($"Valor superior ao disponível na meta ({meta.ValorAtual:N2} €).");
 
             meta.ValorAtual -= request.Valor;
+
+            _context.MetaMovimentos.Add(new MetaMovimento
+            {
+                MetaId = id,
+                Tipo = "Levantamento",
+                Valor = request.Valor,
+                Data = DateTime.Now
+            });
 
             await _context.SaveChangesAsync();
             return Ok(new { mensagem = "Levantamento registado com sucesso." });
