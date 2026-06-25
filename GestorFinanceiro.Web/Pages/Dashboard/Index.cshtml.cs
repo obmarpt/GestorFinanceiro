@@ -26,6 +26,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
         public decimal Saldo => TotalReceitas - TotalDespesas;
         public IList<SessaoResumoViewModel> ResumoPorSessao { get; set; } = [];
         public IList<MetaViewModel> Metas { get; set; } = [];
+        public IList<HistoricoItemViewModel> Historico { get; set; } = [];
         public string? MensagemErro { get; set; }
         public string ChartDataJson { get; set; } = "{}";
         public bool TemDadosGraficos { get; set; }
@@ -42,10 +43,10 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
             await CarregarDadosAsync();
         }
 
-        public async Task<IActionResult> OnPostDepositarAsync(int metaId, int sessaoOrigemId, decimal valor)
+        public async Task<IActionResult> OnPostDepositarAsync(int metaId, decimal valor)
         {
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-            var payload = new { SessaoOrigemId = sessaoOrigemId, Valor = valor };
+            var payload = new { Valor = valor };
 
             try
             {
@@ -57,7 +58,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 }
                 else
                 {
-                    TempData["Sucesso"] = "Deposito realizado com sucesso.";
+                    TempData["Sucesso"] = "Deposito registado com sucesso.";
                 }
             }
             catch (HttpRequestException ex)
@@ -68,10 +69,10 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostLevantarAsync(int metaId, int sessaoDestinoId, decimal valor)
+        public async Task<IActionResult> OnPostLevantarAsync(int metaId, decimal valor)
         {
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-            var payload = new { SessaoDestinoId = sessaoDestinoId, Valor = valor };
+            var payload = new { Valor = valor };
 
             try
             {
@@ -83,7 +84,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 }
                 else
                 {
-                    TempData["Sucesso"] = "Levantamento realizado com sucesso.";
+                    TempData["Sucesso"] = "Levantamento registado com sucesso.";
                 }
             }
             catch (HttpRequestException ex)
@@ -104,7 +105,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 var sessoesResponse = await client.GetAsync("api/SessaoFinanceira");
                 if (!sessoesResponse.IsSuccessStatusCode)
                 {
-                    MensagemErro = "Nao foi possivel carregar o dashboard. Verifique se a API esta a correr.";
+                    MensagemErro = "Nao foi possivel carregar o dashboard.";
                     return;
                 }
 
@@ -115,33 +116,32 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
                 TotalSessoes = sessoes.Count;
 
+                List<Data.Models.Receita> receitas = [];
+                List<Data.Models.Despesa> despesas = [];
+
                 if (sessoes.Count > 0)
                 {
-                    var (receitas, despesas, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
-                    if (erro != null)
-                    {
-                        MensagemErro = erro;
-                        return;
-                    }
+                    var (r, d, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
+                    if (erro != null) { MensagemErro = erro; return; }
 
                     var ids = sessoes.Select(s => s.Id).ToHashSet();
-                    receitas = receitas.Where(r => ids.Contains(r.SessaoFinanceiraId)).ToList();
-                    despesas = despesas.Where(d => ids.Contains(d.SessaoFinanceiraId)).ToList();
+                    receitas = r.Where(x => ids.Contains(x.SessaoFinanceiraId)).ToList();
+                    despesas = d.Where(x => ids.Contains(x.SessaoFinanceiraId)).ToList();
 
                     ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
-                        .OrderByDescending(r => r.DataCriacao)
+                        .OrderByDescending(x => x.DataCriacao)
                         .ToList();
 
                     (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(ResumoPorSessao);
 
                     ChartDataJson = JsonSerializer.Serialize(new
                     {
-                        sessoes = ResumoPorSessao.Select(r => new
+                        sessoes = ResumoPorSessao.Select(x => new
                         {
-                            id = r.SessaoId,
-                            nome = r.Nome,
-                            receitas = r.TotalReceitas,
-                            despesas = r.TotalDespesas
+                            id = x.SessaoId,
+                            nome = x.Nome,
+                            receitas = x.TotalReceitas,
+                            despesas = x.TotalDespesas
                         }).ToList(),
                         totalReceitas = TotalReceitas,
                         totalDespesas = TotalDespesas
@@ -150,6 +150,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     TemDadosGraficos = TotalReceitas > 0 || TotalDespesas > 0;
                 }
 
+                // Metas
                 var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                 var metasResponse = await client.GetAsync("api/Meta");
                 if (metasResponse.IsSuccessStatusCode)
@@ -170,11 +171,59 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                         })
                         .ToList();
                 }
+
+                // Historico: transferencias + movimentos de metas
+                var metaIds = Metas.Select(m => m.Id).ToHashSet();
+
+                var transferencias = despesas
+                    .Where(d => d.Descricao != null && d.Descricao.Contains("→"))
+                    .Select(d => new HistoricoItemViewModel
+                    {
+                        Data = d.Data,
+                        Tipo = "Transferencia",
+                        Icone = "⇄",
+                        Valor = d.Valor,
+                        Descricao = d.Descricao ?? ""
+                    });
+
+                var movimentosResponse = await client.GetAsync("api/Meta/movimentos");
+                IEnumerable<HistoricoItemViewModel> metaMovimentos = [];
+
+                if (movimentosResponse.IsSuccessStatusCode)
+                {
+                    var movimentos = await movimentosResponse.Content.ReadFromJsonAsync<List<MetaMovimentoDto>>(FinanceApiHelper.JsonOptions) ?? [];
+                    metaMovimentos = movimentos
+                        .Where(m => metaIds.Contains(m.MetaId))
+                        .Select(m => new HistoricoItemViewModel
+                        {
+                            Data = m.Data,
+                            Tipo = m.Tipo == "Deposito" ? "Deposito Meta" : "Levantamento Meta",
+                            Icone = m.Tipo == "Deposito" ? "💰" : "💸",
+                            Valor = m.Valor,
+                            Descricao = $"Meta: {Metas.FirstOrDefault(meta => meta.Id == m.MetaId)?.Nome ?? ""}"
+                        });
+                }
+
+                Historico = transferencias
+                    .Concat(metaMovimentos)
+                    .OrderByDescending(h => h.Data)
+                    .Take(10)
+                    .ToList();
             }
             catch (HttpRequestException ex)
             {
                 MensagemErro = $"Erro de ligacao a API: {ex.Message}";
             }
+        }
+
+        // DTO local para deserializar os movimentos da API
+        private class MetaMovimentoDto
+        {
+            public int Id { get; set; }
+            public int MetaId { get; set; }
+            public string Tipo { get; set; } = string.Empty;
+            public decimal Valor { get; set; }
+            public DateTime Data { get; set; }
         }
     }
 }

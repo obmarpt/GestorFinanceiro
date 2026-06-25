@@ -74,16 +74,12 @@
                 <p class="saldo-hero-hint">
                     @(Model.Saldo >= 0 ? "Tens saldo positivo nas tuas sessões." : "As despesas superam as receitas.")
                 </p>
-
                 @if (Model.ResumoPorSessao.Count >= 2)
                 {
-                    var origemId = origemTransferencia?.SessaoId;
-                    var valorTransferencia = origemTransferencia?.Saldo;
-
                     <div class="saldo-hero-acoes">
                         <a asp-page="/Transferencia/Transferir"
-                           asp-route-origemId="@origemId"
-                           asp-route-valor="@valorTransferencia"
+                           asp-route-origemId="@origemTransferencia?.SessaoId"
+                           asp-route-valor="@origemTransferencia?.Saldo"
                            class="btn-app btn-app-primary saldo-hero-btn">
                             Transferir
                         </a>
@@ -101,7 +97,6 @@
                     <h2 class="chart-title">Receitas vs Despesas</h2>
                     <p class="chart-box-subtitle">Comparativo por sessão ou totais agregados</p>
                 </div>
-
                 @if (Model.TemDadosGraficos)
                 {
                     <div class="chart-box-inner">
@@ -151,7 +146,6 @@
                 @foreach (var meta in Model.Metas)
                 {
                     var cardClass = meta.Concluida ? "sessao-card--positivo" : "";
-
                     <article class="sessao-card sessao-card--dashboard @cardClass">
                         <div class="sessao-card-header">
                             <h3 class="sessao-card-nome">
@@ -162,10 +156,8 @@
                                 @meta.Nome
                             </h3>
                             <div class="sessao-card-actions-inline">
-                                <a asp-page="/Meta/Edit" asp-route-id="@meta.Id"
-                                   class="btn-app btn-app-sm btn-app-outline">Editar</a>
-                                <a asp-page="/Meta/Delete" asp-route-id="@meta.Id"
-                                   class="btn-app btn-app-sm btn-app-danger">Apagar</a>
+                                <a asp-page="/Meta/Edit" asp-route-id="@meta.Id" class="btn-app btn-app-sm btn-app-outline">Editar</a>
+                                <a asp-page="/Meta/Delete" asp-route-id="@meta.Id" class="btn-app btn-app-sm btn-app-danger">Apagar</a>
                             </div>
                         </div>
 
@@ -185,63 +177,80 @@
                             <span class="meta-valor-alvo">@meta.ValorAlvo.ToString("N2") €</span>
                         </div>
 
-                        @if (Model.ResumoPorSessao.Any())
-                        {
-                            <div class="meta-acoes">
-                                <button type="button" class="btn-app btn-app-sm btn-app-success"
-                                        onclick="toggleMetaForm('depositar-@meta.Id')">
-                                    ➕ Depositar
-                                </button>
-                                <button type="button" class="btn-app btn-app-sm btn-app-outline"
-                                        onclick="toggleMetaForm('levantar-@meta.Id')">
-                                    ➖ Levantar
-                                </button>
-                            </div>
+                        <div class="meta-acoes">
+                            <button type="button" class="btn-app btn-app-sm btn-app-success"
+                                    onclick="toggleMetaForm('depositar-@meta.Id')">
+                                💰 Depositar
+                            </button>
+                            <button type="button" class="btn-app btn-app-sm btn-app-outline"
+                                    onclick="toggleMetaForm('levantar-@meta.Id')">
+                                💸 Levantar
+                            </button>
+                        </div>
 
-                            <div id="depositar-@meta.Id" class="meta-form" style="display:none">
-                                <form method="post" asp-page-handler="Depositar" class="meta-form-inner">
-                                    <input type="hidden" name="MetaId" value="@meta.Id" />
-                                    <select name="SessaoOrigemId" class="form-control">
-                                        @foreach (var s in Model.ResumoPorSessao)
-                                        {
-                                            <option value="@s.SessaoId">@s.Nome (@s.Saldo.ToString("N2") €)</option>
-                                        }
-                                    </select>
-                                    <input type="number" name="Valor" class="form-control"
-                                           placeholder="Valor (€)" step="0.01" min="0.01" />
-                                    <div class="meta-form-actions">
-                                        <button type="submit" class="btn-app btn-app-sm btn-app-success">Confirmar</button>
-                                        <button type="button" class="btn-app btn-app-sm btn-app-secondary"
-                                                onclick="toggleMetaForm('depositar-@meta.Id')">
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
+                        <div id="depositar-@meta.Id" class="meta-form" style="display:none">
+                            <form method="post" asp-page-handler="Depositar" class="meta-form-inner">
+                                <input type="hidden" name="MetaId" value="@meta.Id" />
+                                <input type="number" name="Valor" class="form-control"
+                                       placeholder="Valor (€)" step="0.01" min="0.01" />
+                                <div class="meta-form-actions">
+                                    <button type="submit" class="btn-app btn-app-sm btn-app-success">Confirmar</button>
+                                    <button type="button" class="btn-app btn-app-sm btn-app-secondary"
+                                            onclick="toggleMetaForm('depositar-@meta.Id')">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
 
-                            <div id="levantar-@meta.Id" class="meta-form" style="display:none">
-                                <form method="post" asp-page-handler="Levantar" class="meta-form-inner">
-                                    <input type="hidden" name="MetaId" value="@meta.Id" />
-                                    <select name="SessaoDestinoId" class="form-control">
-                                        @foreach (var s in Model.ResumoPorSessao)
-                                        {
-                                            <option value="@s.SessaoId">@s.Nome</option>
-                                        }
-                                    </select>
-                                    <input type="number" name="Valor" class="form-control"
-                                           placeholder="Valor (€)" step="0.01" min="0.01"
-                                           max="@meta.ValorAtual.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
-                                    <div class="meta-form-actions">
-                                        <button type="submit" class="btn-app btn-app-sm btn-app-primary">Confirmar</button>
-                                        <button type="button" class="btn-app btn-app-sm btn-app-secondary"
-                                                onclick="toggleMetaForm('levantar-@meta.Id')">
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        }
+                        <div id="levantar-@meta.Id" class="meta-form" style="display:none">
+                            <form method="post" asp-page-handler="Levantar" class="meta-form-inner">
+                                <input type="hidden" name="MetaId" value="@meta.Id" />
+                                <input type="number" name="Valor" class="form-control"
+                                       placeholder="Valor (€)" step="0.01" min="0.01"
+                                       max="@meta.ValorAtual.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+                                <div class="meta-form-actions">
+                                    <button type="submit" class="btn-app btn-app-sm btn-app-primary">Confirmar</button>
+                                    <button type="button" class="btn-app btn-app-sm btn-app-secondary"
+                                            onclick="toggleMetaForm('levantar-@meta.Id')">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </article>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="section-block section-block--historico">
+        <div class="sessions-header">
+            <h2 class="section-title mb-0">Histórico recente</h2>
+        </div>
+
+        @if (!Model.Historico.Any())
+        {
+            <div class="empty-state empty-state--compact">
+                <p>Ainda não há transferências ou movimentos de metas registados.</p>
+            </div>
+        }
+        else
+        {
+            <div class="historico-list">
+                @foreach (var item in Model.Historico)
+                {
+                    <div class="historico-item">
+                        <span class="historico-icone">@item.Icone</span>
+                        <div class="historico-info">
+                            <span class="historico-descricao">@item.Descricao</span>
+                            <span class="historico-tipo">@item.Tipo</span>
+                        </div>
+                        <div class="historico-right">
+                            <span class="historico-valor">@item.Valor.ToString("N2") €</span>
+                            <span class="historico-data">@item.Data.ToString("dd MMM yyyy HH:mm")</span>
+                        </div>
+                    </div>
                 }
             </div>
         }
@@ -278,9 +287,7 @@
                                 @r.DataCriacao.ToString("dd MMM yyyy")
                             </time>
                         </div>
-
                         <div class="sessao-card-valor @valorClass">@r.Saldo.ToString("N2") €</div>
-
                         <div class="sessao-card-actions">
                             <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@r.SessaoId"
                                class="btn-app btn-app-primary btn-app-open">Abrir →</a>
