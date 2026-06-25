@@ -19,6 +19,7 @@ namespace GestorFinanceiro.Data.Context
         public DbSet<SessaoFinanceiraCategoria> SessaoFinanceiraCategorias { get; set; }
         public DbSet<Meta> Metas { get; set; }
         public DbSet<MetaMovimento> MetaMovimentos { get; set; }
+        public DbSet<Bolsa> Bolsas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,12 @@ namespace GestorFinanceiro.Data.Context
                 .HasOne(mm => mm.Meta)
                 .WithMany()
                 .HasForeignKey(mm => mm.MetaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Bolsa>()
+                .HasOne(b => b.Utilizador)
+                .WithMany()
+                .HasForeignKey(b => b.UtilizadorId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
