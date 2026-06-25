@@ -3,6 +3,7 @@ using GestorFinanceiro.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GestorFinanceiro.Web.Pages.Dashboard
@@ -23,6 +24,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
         public decimal TotalDespesas { get; set; }
         public decimal Saldo => TotalReceitas - TotalDespesas;
         public IList<SessaoResumoViewModel> ResumoPorSessao { get; set; } = [];
+        public IList<MetaViewModel> Metas { get; set; } = [];
         public string? MensagemErro { get; set; }
         public string ChartDataJson { get; set; } = "{}";
         public bool TemDadosGraficos { get; set; }
@@ -54,40 +56,63 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     .ToList();
 
                 TotalSessoes = sessoes.Count;
-                if (sessoes.Count == 0)
-                    return;
 
-                var (receitas, despesas, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
-                if (erro != null)
+                if (sessoes.Count > 0)
                 {
-                    MensagemErro = erro;
-                    return;
+                    var (receitas, despesas, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
+                    if (erro != null)
+                    {
+                        MensagemErro = erro;
+                        return;
+                    }
+
+                    var ids = sessoes.Select(s => s.Id).ToHashSet();
+                    receitas = receitas.Where(r => ids.Contains(r.SessaoFinanceiraId)).ToList();
+                    despesas = despesas.Where(d => ids.Contains(d.SessaoFinanceiraId)).ToList();
+
+                    ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
+                        .OrderByDescending(r => r.DataCriacao)
+                        .ToList();
+
+                    (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(ResumoPorSessao);
+
+                    ChartDataJson = JsonSerializer.Serialize(new
+                    {
+                        sessoes = ResumoPorSessao.Select(r => new
+                        {
+                            id = r.SessaoId,
+                            nome = r.Nome,
+                            receitas = r.TotalReceitas,
+                            despesas = r.TotalDespesas
+                        }).ToList(),
+                        totalReceitas = TotalReceitas,
+                        totalDespesas = TotalDespesas
+                    });
+
+                    TemDadosGraficos = TotalReceitas > 0 || TotalDespesas > 0;
                 }
 
-                var ids = sessoes.Select(s => s.Id).ToHashSet();
-                receitas = receitas.Where(r => ids.Contains(r.SessaoFinanceiraId)).ToList();
-                despesas = despesas.Where(d => ids.Contains(d.SessaoFinanceiraId)).ToList();
-
-                ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
-                    .OrderByDescending(r => r.DataCriacao)
-                    .ToList();
-
-                (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(ResumoPorSessao);
-
-                ChartDataJson = JsonSerializer.Serialize(new
+                // Carregar metas do utilizador
+                var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                var metasResponse = await client.GetAsync("api/Meta");
+                if (metasResponse.IsSuccessStatusCode)
                 {
-                    sessoes = ResumoPorSessao.Select(r => new
-                    {
-                        id = r.SessaoId,
-                        nome = r.Nome,
-                        receitas = r.TotalReceitas,
-                        despesas = r.TotalDespesas
-                    }).ToList(),
-                    totalReceitas = TotalReceitas,
-                    totalDespesas = TotalDespesas
-                });
-
-                TemDadosGraficos = TotalReceitas > 0 || TotalDespesas > 0;
+                    var todasMetas = await metasResponse.Content.ReadFromJsonAsync<List<Data.Models.Meta>>(FinanceApiHelper.JsonOptions) ?? [];
+                    Metas = todasMetas
+                        .Where(m => m.UtilizadorId == utilizadorId)
+                        .OrderBy(m => m.DataCriacao)
+                        .Select(m => new MetaViewModel
+                        {
+                            Id = m.Id,
+                            Nome = m.Nome,
+                            Descricao = m.Descricao,
+                            ValorAlvo = m.ValorAlvo,
+                            ValorAtual = m.ValorAtual,
+                            UtilizadorId = m.UtilizadorId,
+                            DataCriacao = m.DataCriacao
+                        })
+                        .ToList();
+                }
             }
             catch (HttpRequestException ex)
             {

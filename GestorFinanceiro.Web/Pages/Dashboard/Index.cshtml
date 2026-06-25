@@ -16,6 +16,7 @@
         </div>
         <div class="dashboard-header-actions">
             <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
+            <a asp-page="/Meta/Create" class="btn-app btn-app-primary">🎯 Nova Meta</a>
             @if (Model.ResumoPorSessao.Count >= 2)
             {
                 <a asp-page="/Transferencia/Transferir" class="btn-app btn-app-primary">⇄ Transferir</a>
@@ -130,6 +131,64 @@
             </div>
         </section>
     }
+
+    <section class="section-block section-block--metas">
+        <div class="sessions-header">
+            <h2 class="section-title mb-0">As minhas metas</h2>
+            <a asp-page="/Meta/Create" class="btn-app btn-app-sm btn-app-outline">+ Nova meta</a>
+        </div>
+
+        @if (!Model.Metas.Any())
+        {
+            <div class="empty-state">
+                <p>Ainda não tens metas definidas. Cria a tua primeira meta de poupança.</p>
+                <a asp-page="/Meta/Create" class="btn-app btn-app-success">Criar meta</a>
+            </div>
+        }
+        else
+        {
+            <div class="sessoes-grid sessoes-grid--dashboard">
+                @foreach (var meta in Model.Metas)
+                {
+                    var progressClass = meta.Concluida ? "meta-progress--concluida" : "meta-progress--ativa";
+                    var cardClass = meta.Concluida ? "sessao-card--positivo" : "";
+
+                    <article class="sessao-card sessao-card--dashboard @cardClass">
+                        <div class="sessao-card-header">
+                            <h3 class="sessao-card-nome">
+                                @if (meta.Concluida)
+                                {
+                                    <span>✅ </span>
+                                }
+                                @meta.Nome
+                            </h3>
+                            <div class="sessao-card-actions-inline">
+                                <a asp-page="/Meta/Edit" asp-route-id="@meta.Id"
+                                   class="btn-app btn-app-sm btn-app-outline">Editar</a>
+                                <a asp-page="/Meta/Delete" asp-route-id="@meta.Id"
+                                   class="btn-app btn-app-sm btn-app-danger">Apagar</a>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(meta.Descricao))
+                        {
+                            <p class="sessao-card-descricao">@meta.Descricao</p>
+                        }
+
+                        <div class="meta-progress @progressClass">
+                            <div class="meta-progress-bar" style="width: @meta.Percentagem.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+
+                        <div class="meta-valores">
+                            <span class="meta-valor-atual">@meta.ValorAtual.ToString("N2") €</span>
+                            <span class="meta-percentagem">@meta.Percentagem.ToString("F1")%</span>
+                            <span class="meta-valor-alvo">@meta.ValorAlvo.ToString("N2") €</span>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
 
     <section class="section-block section-block--sessions">
         <div class="sessions-header">
