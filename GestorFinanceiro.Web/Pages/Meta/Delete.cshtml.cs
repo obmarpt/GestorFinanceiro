@@ -19,6 +19,7 @@ namespace GestorFinanceiro.Web.Pages.Meta
         public int Id { get; set; }
 
         public string? NomeMeta { get; set; }
+        public decimal ValorAtual { get; set; }
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
@@ -35,6 +36,7 @@ namespace GestorFinanceiro.Web.Pages.Meta
 
                 var meta = await response.Content.ReadFromJsonAsync<GestorFinanceiro.Data.Models.Meta>();
                 NomeMeta = meta?.Nome;
+                ValorAtual = meta?.ValorAtual ?? 0;
                 return Page();
             }
             catch (HttpRequestException ex)
@@ -52,18 +54,19 @@ namespace GestorFinanceiro.Web.Pages.Meta
                 var response = await client.DeleteAsync($"api/Meta/{Id}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    MensagemErro = "Não foi possível apagar a meta.";
-                    return Page();
+                    TempData["Erro"] = "Não foi possível apagar a meta.";
                 }
-
-                TempData["Sucesso"] = "Meta apagada com sucesso.";
-                return RedirectToPage("/Dashboard/Index");
+                else
+                {
+                    TempData["Sucesso"] = "Meta apagada com sucesso.";
+                }
             }
             catch (HttpRequestException ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
-                return Page();
+                TempData["Erro"] = $"Erro de ligação à API: {ex.Message}";
             }
+
+            return RedirectToPage("/Dashboard/Index");
         }
     }
 }

@@ -46,14 +46,14 @@ namespace GestorFinanceiro.Web.Pages.Meta
                 var response = await client.GetAsync($"api/Meta/{Id}");
                 if (!response.IsSuccessStatusCode)
                 {
-                    MensagemErro = "Meta não encontrada.";
+                    MensagemErro = "Poupança não encontrada.";
                     return Page();
                 }
 
                 var meta = await response.Content.ReadFromJsonAsync<GestorFinanceiro.Data.Models.Meta>();
                 if (meta == null)
                 {
-                    MensagemErro = "Meta não encontrada.";
+                    MensagemErro = "Poupança não encontrada.";
                     return Page();
                 }
 

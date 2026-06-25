@@ -2,7 +2,7 @@
 @model GestorFinanceiro.Web.Pages.Meta.CreateModel
 
 @{
-    ViewData["Title"] = "Nova Meta";
+    ViewData["Title"] = "Nova Poupança";
 }
 
 <div class="dashboard-container">
@@ -11,7 +11,7 @@
 
     <div class="dashboard-header">
         <div>
-            <h1 class="page-title">Nova meta</h1>
+            <h1 class="page-title">Nova poupança</h1>
             <p class="subtitle">Define um objetivo de poupança</p>
         </div>
         <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
@@ -26,7 +26,7 @@
 
         <form method="post" class="form-app">
             <div class="field-group">
-                <label asp-for="Nome" class="form-label">Nome da meta</label>
+                <label asp-for="Nome" class="form-label">Nome da poupança</label>
                 <input asp-for="Nome" class="form-control" placeholder="Ex: Férias de verão" />
                 <span asp-validation-for="Nome" class="text-danger"></span>
             </div>
@@ -42,10 +42,10 @@
             <div class="field-group">
                 <label asp-for="ValorAtual" class="form-label">Valor atual (€)</label>
                 <input asp-for="ValorAtual" class="form-control" type="number" step="0.01" min="0" />
-                <small class="form-hint">Quanto já tens poupado para esta meta.</small>
+                <small class="form-hint">Quanto já tens poupado para esta poupança.</small>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn-app btn-app-success">Criar meta</button>
+                <button type="submit" class="btn-app btn-app-success">Criar poupança</button>
                 <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
             </div>
         </form>

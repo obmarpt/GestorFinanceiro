@@ -1218,6 +1218,17 @@ body {
     letter-spacing: -0.02em;
 }
 
+.historico-icone--entrada {
+    background: rgba(var(--success-rgb), 0.15);
+    border-color: rgba(var(--success-rgb), 0.3);
+    color: var(--success);
+}
+
+.historico-icone--saida {
+    background: rgba(var(--danger-rgb), 0.15);
+    border-color: rgba(var(--danger-rgb), 0.3);
+    color: var(--danger);
+}
 .profile-handle, .settings-display-email {
     margin: 0.25rem 0 0;
     opacity: 0.9;

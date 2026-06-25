@@ -1,5 +1,6 @@
 ﻿@page "{id:int}"
 @model GestorFinanceiro.Web.Pages.Meta.DeleteModel
+@using System.Globalization
 
 @{
     ViewData["Title"] = "Apagar Meta";
@@ -10,7 +11,7 @@
     <div class="dashboard-header">
         <div>
             <h1 class="page-title">Apagar meta</h1>
-            <p class="subtitle">Esta ação é irreversível</p>
+            <p class="subtitle">Confirma que pretendes eliminar esta meta</p>
         </div>
         <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
     </div>
@@ -24,11 +25,36 @@
 
         @if (Model.NomeMeta != null)
         {
-            <p>Tens a certeza que queres apagar a meta <strong>@Model.NomeMeta</strong>?</p>
+            <div class="alert alert-app alert-app-danger" style="margin-bottom:1.5rem">
+                Estás prestes a apagar a meta <strong>@Model.NomeMeta</strong>.
+                Esta ação é irreversível.
+            </div>
 
-            <form method="post" class="form-app">
+            @if (Model.ValorAtual > 0)
+            {
+                <div class="sessions-card" style="margin-bottom:1.5rem; padding: 1.25rem 1.5rem; background: var(--kpi-receitas-bg); border-color: var(--kpi-receitas-border)">
+                    <p style="margin:0; font-weight:600; color: var(--success-dark)">
+                        Esta meta tem <strong>@Model.ValorAtual.ToString("N2") €</strong> acumulados.
+                        Para confirmar o apagar, tens de inserir esse valor abaixo.
+                    </p>
+                </div>
+            }
+
+            <form method="post" class="form-app" id="deleteForm">
+
+                @if (Model.ValorAtual > 0)
+                {
+                    <div class="field-group">
+                        <label class="form-label">Confirma o valor atual da meta para apagar</label>
+                        <input type="number" id="valorConfirmacao" class="form-control"
+                               placeholder="@Model.ValorAtual.ToString("N2", CultureInfo.InvariantCulture)"
+                               step="0.01" />
+                        <small class="form-hint">Escreve exatamente <strong>@Model.ValorAtual.ToString("N2") €</strong> para confirmar.</small>
+                    </div>
+                }
+
                 <div class="form-actions">
-                    <button type="submit" class="btn-app btn-app-danger">Apagar</button>
+                    <button type="submit" class="btn-app btn-app-danger">Apagar meta</button>
                     <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
                 </div>
             </form>
@@ -37,3 +63,22 @@
     </div>
 
 </div>
+
+@section Scripts {
+    <script>
+        const form = document.getElementById('deleteForm');
+        const valorEsperado = @Model.ValorAtual.ToString("F2", CultureInfo.InvariantCulture);
+
+        if (form && valorEsperado > 0) {
+            form.addEventListener('submit', function (e) {
+                const input = document.getElementById('valorConfirmacao');
+                const inputVal = parseFloat(input.value.replace(',', '.'));
+                if (isNaN(inputVal) || Math.abs(inputVal - valorEsperado) > 0.001) {
+                    e.preventDefault();
+                    alert('O valor inserido não corresponde ao valor atual da meta. Tenta novamente.');
+                    input.focus();
+                }
+            });
+        }
+    </script>
+}
