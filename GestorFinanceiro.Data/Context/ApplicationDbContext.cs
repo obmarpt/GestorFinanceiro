@@ -18,40 +18,37 @@ namespace GestorFinanceiro.Data.Context
         public DbSet<Categoria> Categorias { get; set; }
         public DbSet<SessaoFinanceiraCategoria> SessaoFinanceiraCategorias { get; set; }
         public DbSet<Meta> Metas { get; set; }
+        public DbSet<MetaMovimento> MetaMovimentos { get; set; }
+        public DbSet<Bolsa> Bolsas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Utilizador -> SessaoFinanceira (1:N)
             modelBuilder.Entity<SessaoFinanceira>()
                 .HasOne(s => s.Utilizador)
                 .WithMany(u => u.SessoesFinanceiras)
                 .HasForeignKey(s => s.UtilizadorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // SessaoFinanceira -> Receita (1:N)
             modelBuilder.Entity<Receita>()
                 .HasOne(r => r.SessaoFinanceira)
                 .WithMany(s => s.Receitas)
                 .HasForeignKey(r => r.SessaoFinanceiraId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // SessaoFinanceira -> ReceitaRecorrente (1:N)
             modelBuilder.Entity<ReceitaRecorrente>()
                 .HasOne(rr => rr.SessaoFinanceira)
                 .WithMany(s => s.ReceitasRecorrentes)
                 .HasForeignKey(rr => rr.SessaoFinanceiraId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // SessaoFinanceira -> Despesa (1:N)
             modelBuilder.Entity<Despesa>()
                 .HasOne(d => d.SessaoFinanceira)
                 .WithMany(s => s.Despesas)
                 .HasForeignKey(d => d.SessaoFinanceiraId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // SessaoFinanceira <-> Categoria (N:M)
             modelBuilder.Entity<SessaoFinanceiraCategoria>()
                 .HasKey(sc => new { sc.SessaoFinanceiraId, sc.CategoriaId });
 
@@ -65,11 +62,22 @@ namespace GestorFinanceiro.Data.Context
                 .WithMany(c => c.SessaoFinanceiraCategorias)
                 .HasForeignKey(sc => sc.CategoriaId);
 
-            // Utilizador -> Meta (1:N)
             modelBuilder.Entity<Meta>()
                 .HasOne(m => m.Utilizador)
                 .WithMany()
                 .HasForeignKey(m => m.UtilizadorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MetaMovimento>()
+                .HasOne(mm => mm.Meta)
+                .WithMany()
+                .HasForeignKey(mm => mm.MetaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Bolsa>()
+                .HasOne(b => b.Utilizador)
+                .WithMany()
+                .HasForeignKey(b => b.UtilizadorId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

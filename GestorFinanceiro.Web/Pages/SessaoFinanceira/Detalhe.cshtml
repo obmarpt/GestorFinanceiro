@@ -14,7 +14,13 @@
             <h1 class="page-title">@Model.Nome</h1>
             <p class="subtitle">@(Model.Descricao ?? "Detalhe da sessão") · @Model.DataCriacao.ToString("dd/MM/yyyy")</p>
         </div>
-        <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary btn-app-sm">← Sessões</a>
+        <div class="dashboard-header-actions">
+            <a asp-page="/SessaoFinanceira/Edit" asp-route-id="@Model.Id"
+               class="btn-app btn-app-outline btn-app-sm">Editar</a>
+            <a asp-page="/SessaoFinanceira/Delete" asp-route-id="@Model.Id"
+               class="btn-app btn-app-danger btn-app-sm">Apagar</a>
+            <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary btn-app-sm">← Sessões</a>
+        </div>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.MensagemErro))

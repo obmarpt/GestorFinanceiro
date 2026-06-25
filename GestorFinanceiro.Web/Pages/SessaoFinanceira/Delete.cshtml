@@ -1,0 +1,92 @@
+﻿@page "{id:int}"
+@model GestorFinanceiro.Web.Pages.SessaoFinanceira.DeleteModel
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Apagar Sessão";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Apagar sessão</h1>
+            <p class="subtitle">Confirma que pretendes eliminar esta sessão</p>
+        </div>
+        <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary btn-app-sm">← Sessões</a>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+
+        @if (Model.NomeSessao != null)
+        {
+            <div class="alert alert-app alert-app-danger" style="margin-bottom:1.5rem">
+                Estás prestes a apagar a sessão <strong>@Model.NomeSessao</strong>.
+                Todas as receitas e despesas associadas serão eliminadas permanentemente.
+            </div>
+
+            @if (Model.Saldo > 0)
+            {
+                <div class="sessions-card" style="margin-bottom:1.5rem; padding: 1.25rem 1.5rem; background: var(--kpi-receitas-bg); border-color: var(--kpi-receitas-border)">
+                    <p style="margin:0; font-weight:600; color: var(--success-dark)">
+                        Esta sessão tem um saldo de <strong>@Model.Saldo.ToString("N2") €</strong>.
+                        Podes guardá-lo na bolsa para transferires mais tarde.
+                    </p>
+                </div>
+            }
+
+            <form method="post" class="form-app" id="deleteForm">
+
+                @if (Model.Saldo > 0)
+                {
+                    <div class="field-group">
+                        <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer; font-size:1rem; font-weight:600; color:var(--text); text-transform:none; letter-spacing:0">
+                            <input type="checkbox" id="guardarNaBolsa" name="GuardarNaBolsa" value="true"
+                                   style="width:1.15rem; height:1.15rem; cursor:pointer" />
+                            Guardar <strong>@Model.Saldo.ToString("N2") €</strong> na bolsa
+                        </label>
+                    </div>
+                }
+
+                <div class="field-group">
+                    <label class="form-label">Para confirmar, escreve o saldo atual da sessão</label>
+                    <input type="number" id="valorConfirmacao" class="form-control"
+                           placeholder="@Model.Saldo.ToString("N2", CultureInfo.InvariantCulture)"
+                           step="0.01" />
+                    <small class="form-hint">
+                        Escreve exatamente <strong>@Model.Saldo.ToString("N2") €</strong> para confirmar o apagar.
+                    </small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-app btn-app-danger">Apagar sessão</button>
+                    <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary">Cancelar</a>
+                </div>
+            </form>
+        }
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        const form = document.getElementById('deleteForm');
+        const saldoEsperado = @Model.Saldo.ToString("F2", CultureInfo.InvariantCulture);
+
+        form.addEventListener('submit', function (e) {
+            const input = document.getElementById('valorConfirmacao');
+            const inputVal = parseFloat(input.value.replace(',', '.'));
+            if (isNaN(inputVal) || Math.abs(inputVal - saldoEsperado) > 0.001) {
+                e.preventDefault();
+                alert('O valor inserido não corresponde ao saldo atual da sessão. Tenta novamente.');
+                input.focus();
+            }
+        });
+    </script>
+}
