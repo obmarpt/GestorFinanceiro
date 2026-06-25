@@ -1,6 +1,7 @@
 using GestorFinanceiro.Web.Helpers;
 using GestorFinanceiro.Web.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -38,6 +39,63 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
         public async Task OnGetAsync()
         {
+            await CarregarDadosAsync();
+        }
+
+        public async Task<IActionResult> OnPostDepositarAsync(int metaId, int sessaoOrigemId, decimal valor)
+        {
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            var payload = new { SessaoOrigemId = sessaoOrigemId, Valor = valor };
+
+            try
+            {
+                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/depositar", payload);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var erro = await response.Content.ReadAsStringAsync();
+                    TempData["Erro"] = erro.Trim('"');
+                }
+                else
+                {
+                    TempData["Sucesso"] = "Deposito realizado com sucesso.";
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["Erro"] = $"Erro de ligacao a API: {ex.Message}";
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostLevantarAsync(int metaId, int sessaoDestinoId, decimal valor)
+        {
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            var payload = new { SessaoDestinoId = sessaoDestinoId, Valor = valor };
+
+            try
+            {
+                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/levantar", payload);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var erro = await response.Content.ReadAsStringAsync();
+                    TempData["Erro"] = erro.Trim('"');
+                }
+                else
+                {
+                    TempData["Sucesso"] = "Levantamento realizado com sucesso.";
+                }
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["Erro"] = $"Erro de ligacao a API: {ex.Message}";
+            }
+
+            return RedirectToPage();
+        }
+
+        private async Task CarregarDadosAsync()
+        {
             Username = User.Identity?.Name ?? "Utilizador";
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
 
@@ -46,7 +104,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 var sessoesResponse = await client.GetAsync("api/SessaoFinanceira");
                 if (!sessoesResponse.IsSuccessStatusCode)
                 {
-                    MensagemErro = "Não foi possível carregar o dashboard. Verifique se a API está a correr.";
+                    MensagemErro = "Nao foi possivel carregar o dashboard. Verifique se a API esta a correr.";
                     return;
                 }
 
@@ -92,7 +150,6 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     TemDadosGraficos = TotalReceitas > 0 || TotalDespesas > 0;
                 }
 
-                // Carregar metas do utilizador
                 var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
                 var metasResponse = await client.GetAsync("api/Meta");
                 if (metasResponse.IsSuccessStatusCode)
@@ -116,7 +173,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
             }
             catch (HttpRequestException ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Erro de ligacao a API: {ex.Message}";
             }
         }
     }

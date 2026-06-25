@@ -150,7 +150,6 @@
             <div class="sessoes-grid sessoes-grid--dashboard">
                 @foreach (var meta in Model.Metas)
                 {
-                    var progressClass = meta.Concluida ? "meta-progress--concluida" : "meta-progress--ativa";
                     var cardClass = meta.Concluida ? "sessao-card--positivo" : "";
 
                     <article class="sessao-card sessao-card--dashboard @cardClass">
@@ -175,8 +174,9 @@
                             <p class="sessao-card-descricao">@meta.Descricao</p>
                         }
 
-                        <div class="meta-progress @progressClass">
-                            <div class="meta-progress-bar" style="width: @meta.Percentagem.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        <div class="meta-progress">
+                            <div class="meta-progress-bar @(meta.Concluida ? "meta-progress-bar--concluida" : "")"
+                                 style="width: @meta.Percentagem.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%"></div>
                         </div>
 
                         <div class="meta-valores">
@@ -184,6 +184,63 @@
                             <span class="meta-percentagem">@meta.Percentagem.ToString("F1")%</span>
                             <span class="meta-valor-alvo">@meta.ValorAlvo.ToString("N2") €</span>
                         </div>
+
+                        @if (Model.ResumoPorSessao.Any())
+                        {
+                            <div class="meta-acoes">
+                                <button type="button" class="btn-app btn-app-sm btn-app-success"
+                                        onclick="toggleMetaForm('depositar-@meta.Id')">
+                                    💰 Depositar
+                                </button>
+                                <button type="button" class="btn-app btn-app-sm btn-app-outline"
+                                        onclick="toggleMetaForm('levantar-@meta.Id')">
+                                    💸 Levantar
+                                </button>
+                            </div>
+
+                            <div id="depositar-@meta.Id" class="meta-form" style="display:none">
+                                <form method="post" asp-page-handler="Depositar" class="meta-form-inner">
+                                    <input type="hidden" name="MetaId" value="@meta.Id" />
+                                    <select name="SessaoOrigemId" class="form-control">
+                                        @foreach (var s in Model.ResumoPorSessao)
+                                        {
+                                            <option value="@s.SessaoId">@s.Nome (@s.Saldo.ToString("N2") €)</option>
+                                        }
+                                    </select>
+                                    <input type="number" name="Valor" class="form-control"
+                                           placeholder="Valor (€)" step="0.01" min="0.01" />
+                                    <div class="meta-form-actions">
+                                        <button type="submit" class="btn-app btn-app-sm btn-app-success">Confirmar</button>
+                                        <button type="button" class="btn-app btn-app-sm btn-app-secondary"
+                                                onclick="toggleMetaForm('depositar-@meta.Id')">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div id="levantar-@meta.Id" class="meta-form" style="display:none">
+                                <form method="post" asp-page-handler="Levantar" class="meta-form-inner">
+                                    <input type="hidden" name="MetaId" value="@meta.Id" />
+                                    <select name="SessaoDestinoId" class="form-control">
+                                        @foreach (var s in Model.ResumoPorSessao)
+                                        {
+                                            <option value="@s.SessaoId">@s.Nome</option>
+                                        }
+                                    </select>
+                                    <input type="number" name="Valor" class="form-control"
+                                           placeholder="Valor (€)" step="0.01" min="0.01"
+                                           max="@meta.ValorAtual.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
+                                    <div class="meta-form-actions">
+                                        <button type="submit" class="btn-app btn-app-sm btn-app-primary">Confirmar</button>
+                                        <button type="button" class="btn-app btn-app-sm btn-app-secondary"
+                                                onclick="toggleMetaForm('levantar-@meta.Id')">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        }
                     </article>
                 }
             </div>
@@ -236,13 +293,22 @@
 
 </div>
 
-@if (Model.TemDadosGraficos)
-{
-    @section Scripts {
+@section Scripts {
+    @if (Model.TemDadosGraficos)
+    {
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         <script>
             window.dashboardChartData = @Html.Raw(Model.ChartDataJson);
         </script>
         <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
     }
+
+    <script>
+        function toggleMetaForm(id) {
+        var form = document.getElementById(id);
+        if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+        }
+    </script>
 }
