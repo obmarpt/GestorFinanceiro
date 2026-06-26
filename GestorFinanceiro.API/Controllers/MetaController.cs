@@ -179,5 +179,29 @@ namespace GestorFinanceiro.API.Controllers
 
             return Ok(new { mensagem = "Levantamento realizado com sucesso." });
         }
+
+        [HttpDelete("movimentos/{id}")]
+        public async Task<IActionResult> ApagarMovimento(int id)
+        {
+            var movimento = await _context.MetaMovimentos
+                .Include(m => m.Meta)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movimento == null)
+                return NotFound("Movimento não encontrado.");
+
+            if (movimento.Tipo == "Deposito")
+                movimento.Meta.ValorAtual -= movimento.Valor;
+            else if (movimento.Tipo == "Levantamento")
+                movimento.Meta.ValorAtual += movimento.Valor;
+
+            if (movimento.Meta.ValorAtual < 0)
+                movimento.Meta.ValorAtual = 0;
+
+            _context.MetaMovimentos.Remove(movimento);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

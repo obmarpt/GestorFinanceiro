@@ -16,7 +16,8 @@
         </div>
         <div class="dashboard-header-actions">
             <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
-            <a asp-page="/Meta/Create" class="btn-app btn-app-primary">🎯 Nova Meta</a>
+            <a asp-page="/Meta/Create" class="btn-app btn-app-primary">🎯 Nova Conta Poupança</a>
+            <a asp-page="/Dashboard/Reset" class="btn-app btn-app-danger">🗑️ Resetar</a>
             @if (Model.ResumoPorSessao.Count >= 2)
             {
                 <a asp-page="/Transferencia/Transferir" class="btn-app btn-app-primary">⇄ Transferir</a>
@@ -291,6 +292,12 @@
                         <div class="historico-right">
                             <span class="historico-valor">@item.Valor.ToString("N2") €</span>
                             <span class="historico-data">@item.Data.ToString("dd MMM yyyy HH:mm")</span>
+                            <form method="post" asp-page-handler="ApagarHistorico" style="margin-top:0.25rem"
+                                  onsubmit="return confirm('Tens a certeza que queres apagar este registo?')">
+                                <input type="hidden" name="RegistoId" value="@item.RegistoId" />
+                                <input type="hidden" name="TipoRegisto" value="@item.TipoRegisto" />
+                                <button type="submit" class="btn-app btn-app-sm btn-app-outline-danger">Apagar</button>
+                            </form>
                         </div>
                     </div>
                 }

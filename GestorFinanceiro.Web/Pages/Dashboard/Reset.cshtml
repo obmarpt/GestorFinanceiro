@@ -1,0 +1,66 @@
+﻿@page
+@model GestorFinanceiro.Web.Pages.Dashboard.ResetModel
+
+@{
+    ViewData["Title"] = "Resetar Movimentos";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Resetar movimentos</h1>
+            <p class="subtitle">Apaga receitas e/ou despesas de todas as sessões</p>
+        </div>
+        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+
+        <div class="alert alert-app alert-app-danger" style="margin-bottom:1.5rem">
+            <strong>Atenção:</strong> Esta ação é irreversível. Os dados apagados não podem ser recuperados.
+        </div>
+
+        <form method="post" class="form-app">
+
+            <div class="field-group">
+                <label class="form-label">O que queres apagar?</label>
+                <div style="display:flex; flex-direction:column; gap:0.65rem; margin-top:0.35rem">
+                    <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer; font-size:0.95rem; font-weight:500; color:var(--text); text-transform:none; letter-spacing:0">
+                        <input type="radio" name="Tipo" value="tudo" checked
+                               style="width:1.1rem; height:1.1rem; cursor:pointer" />
+                        Tudo — receitas e despesas
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer; font-size:0.95rem; font-weight:500; color:var(--text); text-transform:none; letter-spacing:0">
+                        <input type="radio" name="Tipo" value="receitas"
+                               style="width:1.1rem; height:1.1rem; cursor:pointer" />
+                        Só as receitas
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer; font-size:0.95rem; font-weight:500; color:var(--text); text-transform:none; letter-spacing:0">
+                        <input type="radio" name="Tipo" value="despesas"
+                               style="width:1.1rem; height:1.1rem; cursor:pointer" />
+                        Só as despesas
+                    </label>
+                </div>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Password" class="form-label">Confirma a tua password</label>
+                <input asp-for="Password" type="password" class="form-control"
+                       placeholder="Insere a tua password para confirmar" />
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-app btn-app-danger">Resetar</button>
+                <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
+            </div>
+        </form>
+
+    </div>
+
+</div>

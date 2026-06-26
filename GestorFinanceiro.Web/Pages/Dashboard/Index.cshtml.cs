@@ -103,6 +103,34 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
             return RedirectToPage();
         }
 
+        public async Task<IActionResult> OnPostApagarHistoricoAsync(int registoId, string tipoRegisto)
+        {
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            try
+            {
+                string url = tipoRegisto switch
+                {
+                    "receita" => $"api/Receita/{registoId}",
+                    "despesa" => $"api/Despesa/{registoId}",
+                    "metamovimento" => $"api/Meta/movimentos/{registoId}",
+                    _ => ""
+                };
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    TempData["Erro"] = "Tipo de registo desconhecido.";
+                    return RedirectToPage();
+                }
+
+                var response = await client.DeleteAsync(url);
+                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
+                    ? "Registo apagado com sucesso."
+                    : "Não foi possível apagar o registo.";
+            }
+            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            return RedirectToPage();
+        }
+
         private async Task CarregarDadosAsync()
         {
             Username = User.Identity?.Name ?? "Utilizador";
@@ -172,13 +200,13 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
                 // Historico
                 var metaIds = Metas.Select(m => m.Id).ToHashSet();
-
-                // mapa de id -> nome das sessões
                 var sessaoNomes = sessoes.ToDictionary(s => s.Id, s => s.Nome);
 
                 var itensReceitas = receitas
                     .Select(r => new HistoricoItemViewModel
                     {
+                        RegistoId = r.Id,
+                        TipoRegisto = "receita",
                         Data = r.Data,
                         Tipo = "Receita",
                         Icone = "↑",
@@ -190,6 +218,8 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     .Where(d => d.Descricao == null || !d.Descricao.Contains("→") && !d.Descricao.Contains("poupança"))
                     .Select(d => new HistoricoItemViewModel
                     {
+                        RegistoId = d.Id,
+                        TipoRegisto = "despesa",
                         Data = d.Data,
                         Tipo = "Despesa",
                         Icone = "↓",
@@ -201,6 +231,8 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     .Where(d => d.Descricao != null && d.Descricao.Contains("→"))
                     .Select(d => new HistoricoItemViewModel
                     {
+                        RegistoId = d.Id,
+                        TipoRegisto = "despesa",
                         Data = d.Data,
                         Tipo = "Transferencia",
                         Icone = "⇄",
@@ -216,6 +248,8 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     metaMovimentos = movimentos.Where(m => metaIds.Contains(m.MetaId))
                         .Select(m => new HistoricoItemViewModel
                         {
+                            RegistoId = m.Id,
+                            TipoRegisto = "metamovimento",
                             Data = m.Data,
                             Tipo = m.Tipo == "Deposito" ? "Deposito na Conta Poupança" : "Levantamento da Conta Poupança",
                             Icone = m.Tipo == "Deposito" ? "↑" : "↓",
@@ -229,10 +263,9 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     .Concat(transferencias)
                     .Concat(metaMovimentos)
                     .OrderByDescending(h => h.Data)
+                    .ThenByDescending(h => h.RegistoId)
                     .Take(10)
                     .ToList();
-
-
             }
             catch (HttpRequestException ex)
             {
