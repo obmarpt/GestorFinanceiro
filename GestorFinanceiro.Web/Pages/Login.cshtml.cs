@@ -2,8 +2,6 @@ using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-
-// ✅ Autenticação
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,15 +17,12 @@ namespace GestorFinanceiro.Web.Pages
             _context = context;
         }
 
-        // ✅ Username ou Email
         [BindProperty]
         public string LoginInput { get; set; } = string.Empty;
 
-        // ✅ Password
         [BindProperty]
         public string Password { get; set; } = string.Empty;
 
-        // ✅ Mensagens
         public string MensagemErro { get; set; } = string.Empty;
         public string MensagemSucesso { get; set; } = string.Empty;
 
@@ -41,19 +36,14 @@ namespace GestorFinanceiro.Web.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            // ✅ 1. Validar campos
-            if (string.IsNullOrWhiteSpace(LoginInput) ||
-                string.IsNullOrWhiteSpace(Password))
+            if (string.IsNullOrWhiteSpace(LoginInput) || string.IsNullOrWhiteSpace(Password))
             {
                 MensagemErro = "Preencha todos os campos.";
                 return Page();
             }
 
-            // ✅ 2. Procurar utilizador
             var utilizador = await _context.Utilizadores
-                .FirstOrDefaultAsync(u =>
-                    u.Username == LoginInput ||
-                    u.Email == LoginInput);
+                .FirstOrDefaultAsync(u => u.Username == LoginInput || u.Email == LoginInput);
 
             if (utilizador == null)
             {
@@ -61,35 +51,30 @@ namespace GestorFinanceiro.Web.Pages
                 return Page();
             }
 
-            // ✅ 3. Validar password
             if (utilizador.PasswordHash != Password)
             {
                 MensagemErro = "Password incorreta.";
                 return Page();
             }
 
-            // ✅ 4. Criar claims
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, utilizador.Id.ToString()),
                 new Claim(ClaimTypes.Name, utilizador.Username),
                 new Claim(ClaimTypes.Email, utilizador.Email),
-                new Claim("ImagemPerfil", utilizador.ImagemPerfil ?? "")  
+                new Claim(ClaimTypes.Role, utilizador.Role),
+                new Claim("ImagemPerfil", utilizador.ImagemPerfil ?? "")
             };
 
-            // ✅ 5. Criar identidade
-            var claimsIdentity = new ClaimsIdentity(
-                claims,
-                CookieAuthenticationDefaults.AuthenticationScheme);
-
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-            // ✅ 6. Login (cookie)
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                claimsPrincipal);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
 
-            // ✅ 7. Redirecionar
+            // Redirecionar Admin para painel de administração
+            if (utilizador.Role == "Admin")
+                return RedirectToPage("/Admin/Utilizadores");
+
             return RedirectToPage("/Dashboard/Index");
         }
     }

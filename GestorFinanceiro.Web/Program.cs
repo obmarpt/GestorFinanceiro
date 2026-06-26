@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
@@ -29,36 +28,51 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Login";
+        options.AccessDeniedPath = "/AcessoNegado";
     });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ApenasAdmin", policy => policy.RequireRole("Admin"));
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapStaticAssets();
+app.MapRazorPages().WithStaticAssets();
 
+// Criar utilizador Admin se não existir
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    context.Database.EnsureCreated();
 
-
-app.MapRazorPages()
-   .WithStaticAssets();
+    if (!context.Utilizadores.Any(u => u.Role == "Admin"))
+    {
+        context.Utilizadores.Add(new GestorFinanceiro.Data.Models.Utilizador
+        {
+            Nome = "Administrador",
+            Username = "admin",
+            Email = "admin@gestorfinanceiro.pt",
+            PasswordHash = "admin123",
+            Role = "Admin"
+        });
+        context.SaveChanges();
+    }
+}
 
 app.Run();

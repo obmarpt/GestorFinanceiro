@@ -1,0 +1,75 @@
+﻿@page
+@model GestorFinanceiro.Web.Pages.Admin.UtilizadoresModel
+
+@{
+    ViewData["Title"] = "Gestão de Utilizadores";
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Gestão de Utilizadores</h1>
+            <p class="subtitle">Painel de administração</p>
+        </div>
+        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">Dashboard</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+
+    <div class="sessions-card">
+        @if (!Model.Utilizadores.Any())
+        {
+            <div class="empty-state">
+                <p>Sem utilizadores registados.</p>
+            </div>
+        }
+        else
+        {
+            <div class="historico-list">
+                @foreach (var u in Model.Utilizadores)
+                {
+                    <div class="historico-item">
+                        <span class="historico-icone" style="background:var(--kpi-sessions-bg); color:var(--primary); border-color:var(--kpi-sessions-border)">
+                            @(u.Nome.Length >= 2 ? u.Nome[..2].ToUpper() : u.Nome.ToUpper())
+                        </span>
+                        <div class="historico-info">
+                            <span class="historico-descricao">
+                                @u.Nome
+                                <span style="color:var(--text-muted); font-weight:400">· @@@u.Username</span>
+                            </span>
+                            <span class="historico-tipo">
+                                @u.Email ·
+                                <span style="color: @(u.Role == "Admin" ? "var(--primary)" : "var(--text-muted)")">@u.Role</span>
+                                · @u.TotalSessoes sessões
+                            </span>
+                        </div>
+                        <div class="historico-right" style="align-items:flex-end; gap:0.5rem; flex-direction:row">
+                            @if (u.Role != "Admin")
+                            {
+                                <form method="post" asp-page-handler="TornarAdmin" asp-route-id="@u.Id"
+                                      onsubmit="return confirm('Tens a certeza que queres dar permissões de Admin a @u.Username?')">
+                                    <button type="submit" class="btn-app btn-app-sm btn-app-outline">Tornar Admin</button>
+                                </form>
+                                <form method="post" asp-page-handler="Apagar" asp-route-id="@u.Id"
+                                      onsubmit="return confirm('Tens a certeza que queres apagar o utilizador @u.Username? Todas as suas sessões e dados serão eliminados.')">
+                                    <button type="submit" class="btn-app btn-app-sm btn-app-danger">Apagar</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span style="font-size:0.8rem; color:var(--primary); font-weight:700">Admin</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

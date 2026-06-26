@@ -16,6 +16,25 @@ namespace GestorFinanceiro.API.Controllers
             _context = context;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetTodos()
+        {
+            var utilizadores = await _context.Utilizadores
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Nome,
+                    u.Username,
+                    u.Email,
+                    u.Role,
+                    u.ImagemPerfil,
+                    TotalSessoes = _context.SessoesFinanceiras.Count(s => s.UtilizadorId == u.Id)
+                })
+                .ToListAsync();
+
+            return Ok(utilizadores);
+        }
+
         [HttpGet("{id}")]
         public IActionResult GetUtilizador(int id)
         {
@@ -25,7 +44,22 @@ namespace GestorFinanceiro.API.Controllers
 
             return Ok(utilizador);
         }
+        [HttpPatch("{id}/role")]
+        public async Task<IActionResult> AlterarRole(int id, [FromBody] AlterarRoleRequest request)
+        {
+            var utilizador = await _context.Utilizadores.FindAsync(id);
+            if (utilizador == null)
+                return NotFound("Utilizador não encontrado.");
 
+            utilizador.Role = request.Role;
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        public class AlterarRoleRequest
+        {
+            public string Role { get; set; } = string.Empty;
+        }
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarUtilizador(int id, [FromBody] Utilizador utilizador)
         {
@@ -53,6 +87,21 @@ namespace GestorFinanceiro.API.Controllers
             if (!string.IsNullOrWhiteSpace(utilizador.PasswordHash))
                 existente.PasswordHash = utilizador.PasswordHash;
 
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> ApagarUtilizador(int id)
+        {
+            var utilizador = await _context.Utilizadores.FindAsync(id);
+            if (utilizador == null)
+                return NotFound("Utilizador não encontrado.");
+
+            if (utilizador.Role == "Admin")
+                return BadRequest("Não é possível apagar uma conta de administrador.");
+
+            _context.Utilizadores.Remove(utilizador);
             await _context.SaveChangesAsync();
             return NoContent();
         }

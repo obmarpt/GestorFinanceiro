@@ -28,6 +28,12 @@
             </button>
 
             <div class="collapse navbar-collapse navbar-app-collapse" id="navbarMain">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Admin/Utilizadores">⚙️ Admin</a>
+                        </li>
+                    }
                 @if (User.Identity != null && User.Identity.IsAuthenticated)
                 {
                     <ul class="navbar-nav navbar-app-nav">
