@@ -29,22 +29,37 @@
     }
     else
     {
-        <div class="summary-cards summary-cards--hero mb-4">
-            <div class="summary-card summary-card--receitas">
-                <span class="summary-label">Receitas</span>
-                <div class="value value--hero">@Model.TotalReceitas.ToString("N2") €</div>
+        
+        <div class="finance-hero">
+
+            <div class="finance-header">
+                <h2>@Model.Nome</h2>
+                <span>@Model.DataCriacao.ToString("dd MMM yyyy")</span>
             </div>
-            <div class="summary-card summary-card--despesas">
-                <span class="summary-label">Despesas</span>
-                <div class="value value--hero">@Model.TotalDespesas.ToString("N2") €</div>
-            </div>
-            <div class="summary-card summary-card--saldo">
-                <span class="summary-label">Saldo</span>
-                <div class="value value--hero @(Model.Saldo >= 0 ? "positive" : "negative")">
-                    @Model.Saldo.ToString("N2") €
+
+            <div class="finance-main">
+                <div class="finance-saldo @(Model.Saldo >= 0 ? "positivo" : "negativo")">
+                    <span class="label">Saldo Total</span>
+                    <h1>@Model.Saldo.ToString("N2") €</h1>
                 </div>
             </div>
+
+            <div class="finance-details">
+                <div class="detail receitas">
+                    <span>Receitas</span>
+                    <strong>@Model.TotalReceitas.ToString("N2") €</strong>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="detail despesas">
+                    <span>Despesas</span>
+                    <strong>@Model.TotalDespesas.ToString("N2") €</strong>
+                </div>
+            </div>
+
         </div>
+
 
         <div class="detail-actions mb-4">
             <a asp-page="/Receita/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-success">Receitas</a>
