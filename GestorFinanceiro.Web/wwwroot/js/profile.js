@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnCancel.addEventListener('click', function () {
             editMode.querySelectorAll('[data-profile-field]').forEach(function (input) {
                 input.value = input.dataset.originalValue || '';
-            });
+            });555
             showView();
         });
     }

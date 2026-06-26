@@ -43,10 +43,20 @@
                         @{
                             var name = User.Identity.Name ?? "U";
                             var initials = name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
+                            var imagemPerfil = User.FindFirst("ImagemPerfil")?.Value;
                         }
+                            <span style="color:rgba(255,255,255,0.85); font-size:0.875rem; font-weight:600">@name</span>
                         <div class="avatar-menu" id="avatarMenu">
                             <button type="button" class="avatar-btn" id="avatarBtn" aria-expanded="false" aria-label="Menu do utilizador">
-                                <span class="avatar-initials">@initials</span>
+                                    @if (!string.IsNullOrEmpty(imagemPerfil))
+                                    {
+                                        <img src="@imagemPerfil" alt="Avatar" />
+                                            
+                                    }
+                                    else
+                                    {
+                                        <span class="avatar-initials">@initials</span>
+                                    }
                             </button>
                             <div class="avatar-dropdown" id="avatarDropdown">
                                 <a asp-page="/Account/Profile" class="avatar-dropdown-item">Perfil</a>

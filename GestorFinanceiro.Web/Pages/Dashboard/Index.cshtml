@@ -30,6 +30,7 @@
         <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
     }
 
+    @* KPI *@
     <section class="section-block section-block--kpi">
         <h2 class="section-title">Visão geral</h2>
         <div class="summary-cards summary-cards--kpi">
@@ -52,6 +53,7 @@
         </div>
     </section>
 
+    @* SALDO HERO *@
     @if (Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
     {
         <section class="section-block section-block--saldo">
@@ -72,6 +74,7 @@
         </section>
     }
 
+    @* GRÁFICO *@
     @if (Model.ResumoPorSessao.Any())
     {
         <section class="section-block section-block--chart">
@@ -106,6 +109,44 @@
         </section>
     }
 
+    @* SESSOES *@
+    <section class="section-block section-block--sessions">
+        <div class="sessions-header">
+            <h2 class="section-title mb-0">As minhas sessões</h2>
+            @if (Model.ResumoPorSessao.Any())
+            {
+                <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-sm btn-app-outline">Ver todas</a>
+            }
+        </div>
+        @if (!Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="empty-state">
+                <p>Sem sessões criadas. Começa por criar a tua primeira sessão financeira.</p>
+                <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">Criar sessão</a>
+            </div>
+        }
+        else if (Model.ResumoPorSessao.Any())
+        {
+            <div class="sessoes-grid sessoes-grid--dashboard">
+                @foreach (var r in Model.ResumoPorSessao)
+                {
+                    var saldoClass = r.Saldo > 0 ? "sessao-card--positivo" : r.Saldo < 0 ? "sessao-card--negativo" : "sessao-card--zero";
+                    var valorClass = r.Saldo > 0 ? "sessao-card-valor--positivo" : r.Saldo < 0 ? "sessao-card-valor--negativo" : "sessao-card-valor--zero";
+                    <article class="sessao-card sessao-card--dashboard @saldoClass">
+                        <div class="sessao-card-header">
+                            <h3 class="sessao-card-nome">@r.Nome</h3>
+                            <time class="sessao-card-data" datetime="@r.DataCriacao.ToString("yyyy-MM-dd")">@r.DataCriacao.ToString("dd MMM yyyy")</time>
+                        </div>
+                        <div class="sessao-card-valor @valorClass">@r.Saldo.ToString("N2") €</div>
+                        <div class="sessao-card-actions">
+                            <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@r.SessaoId" class="btn-app btn-app-primary btn-app-open">Abrir →</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
     @* BOLSA *@
     @if (Model.Bolsa.TemSaldo)
     {
@@ -120,16 +161,9 @@
                     <span class="bolsa-hint">Dinheiro guardado de sessões apagadas. Transfere para uma sessão ou conta poupança.</span>
                 </div>
                 <div class="bolsa-acoes">
-                    <button type="button" class="btn-app btn-app-primary"
-                            onclick="toggleMetaForm('bolsa-sessao')">
-                        🏦 Para sessão
-                    </button>
-                    <button type="button" class="btn-app btn-app-success"
-                            onclick="toggleMetaForm('bolsa-meta')">
-                        🎯 Para conta poupança
-                    </button>
+                    <button type="button" class="btn-app btn-app-primary" onclick="toggleMetaForm('bolsa-sessao')">🏦 Para sessão</button>
+                    <button type="button" class="btn-app btn-app-success" onclick="toggleMetaForm('bolsa-meta')">🎯 Para conta poupança</button>
                 </div>
-
                 <div id="bolsa-sessao" class="meta-form" style="display:none">
                     <form method="post" asp-page-handler="TransferirBolsaSessao" class="meta-form-inner">
                         <select name="SessaoDestinoId" class="form-control">
@@ -138,19 +172,14 @@
                                 <option value="@s.SessaoId">@s.Nome (@s.Saldo.ToString("N2") €)</option>
                             }
                         </select>
-                        <input type="number" name="Valor" class="form-control"
-                               placeholder="Valor (€)" step="0.01" min="0.01"
+                        <input type="number" name="Valor" class="form-control" placeholder="Valor (€)" step="0.01" min="0.01"
                                max="@Model.Bolsa.Saldo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
                         <div class="meta-form-actions">
                             <button type="submit" class="btn-app btn-app-sm btn-app-primary">Confirmar</button>
-                            <button type="button" class="btn-app btn-app-sm btn-app-secondary"
-                                    onclick="toggleMetaForm('bolsa-sessao')">
-                                Cancelar
-                            </button>
+                            <button type="button" class="btn-app btn-app-sm btn-app-secondary" onclick="toggleMetaForm('bolsa-sessao')">Cancelar</button>
                         </div>
                     </form>
                 </div>
-
                 @if (Model.Metas.Any())
                 {
                     <div id="bolsa-meta" class="meta-form" style="display:none">
@@ -161,15 +190,11 @@
                                     <option value="@m.Id">@m.Nome</option>
                                 }
                             </select>
-                            <input type="number" name="Valor" class="form-control"
-                                   placeholder="Valor (€)" step="0.01" min="0.01"
+                            <input type="number" name="Valor" class="form-control" placeholder="Valor (€)" step="0.01" min="0.01"
                                    max="@Model.Bolsa.Saldo.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
                             <div class="meta-form-actions">
                                 <button type="submit" class="btn-app btn-app-sm btn-app-success">Confirmar</button>
-                                <button type="button" class="btn-app btn-app-sm btn-app-secondary"
-                                        onclick="toggleMetaForm('bolsa-meta')">
-                                    Cancelar
-                                </button>
+                                <button type="button" class="btn-app btn-app-sm btn-app-secondary" onclick="toggleMetaForm('bolsa-meta')">Cancelar</button>
                             </div>
                         </form>
                     </div>
@@ -184,7 +209,6 @@
             <h2 class="section-title mb-0">As minhas contas poupanças</h2>
             <a asp-page="/Meta/Create" class="btn-app btn-app-sm btn-app-outline">+ Nova conta poupança</a>
         </div>
-
         @if (!Model.Metas.Any())
         {
             <div class="empty-state">
@@ -200,7 +224,7 @@
                     var cardClass = meta.Concluida ? "sessao-card--positivo" : "";
                     <article class="sessao-card sessao-card--dashboard @cardClass">
                         <div class="sessao-card-header">
-                            <h3 class="sessao-card-nome">@if (meta.Concluida) {
+                            <h3 class="sessao-card-nome">@if (meta.Concluida){
                                 <span>✅ </span>
                             }
                             @meta.Nome</h3>
@@ -273,7 +297,7 @@
         @if (!Model.Historico.Any())
         {
             <div class="empty-state empty-state--compact">
-                <p>Ainda não há transferências ou movimentos de contas poupanças registados.</p>
+                <p>Ainda não há transferências ou movimentos registados.</p>
             </div>
         }
         else
@@ -300,44 +324,6 @@
                             </form>
                         </div>
                     </div>
-                }
-            </div>
-        }
-    </section>
-
-    @* SESSOES *@
-    <section class="section-block section-block--sessions">
-        <div class="sessions-header">
-            <h2 class="section-title mb-0">As minhas sessões</h2>
-            @if (Model.ResumoPorSessao.Any())
-            {
-                <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-sm btn-app-outline">Ver todas</a>
-            }
-        </div>
-        @if (!Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
-        {
-            <div class="empty-state">
-                <p>Sem sessões criadas. Começa por criar a tua primeira sessão financeira.</p>
-                <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">Criar sessão</a>
-            </div>
-        }
-        else if (Model.ResumoPorSessao.Any())
-        {
-            <div class="sessoes-grid sessoes-grid--dashboard">
-                @foreach (var r in Model.ResumoPorSessao)
-                {
-                    var saldoClass = r.Saldo > 0 ? "sessao-card--positivo" : r.Saldo < 0 ? "sessao-card--negativo" : "sessao-card--zero";
-                    var valorClass = r.Saldo > 0 ? "sessao-card-valor--positivo" : r.Saldo < 0 ? "sessao-card-valor--negativo" : "sessao-card-valor--zero";
-                    <article class="sessao-card sessao-card--dashboard @saldoClass">
-                        <div class="sessao-card-header">
-                            <h3 class="sessao-card-nome">@r.Nome</h3>
-                            <time class="sessao-card-data" datetime="@r.DataCriacao.ToString("yyyy-MM-dd")">@r.DataCriacao.ToString("dd MMM yyyy")</time>
-                        </div>
-                        <div class="sessao-card-valor @valorClass">@r.Saldo.ToString("N2") €</div>
-                        <div class="sessao-card-actions">
-                            <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@r.SessaoId" class="btn-app btn-app-primary btn-app-open">Abrir →</a>
-                        </div>
-                    </article>
                 }
             </div>
         }
