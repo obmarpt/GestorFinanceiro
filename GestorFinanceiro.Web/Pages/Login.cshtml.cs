@@ -73,7 +73,8 @@ namespace GestorFinanceiro.Web.Pages
             {
                 new Claim(ClaimTypes.NameIdentifier, utilizador.Id.ToString()),
                 new Claim(ClaimTypes.Name, utilizador.Username),
-                new Claim(ClaimTypes.Email, utilizador.Email)
+                new Claim(ClaimTypes.Email, utilizador.Email),
+                new Claim("ImagemPerfil", utilizador.ImagemPerfil ?? "")  
             };
 
             // ✅ 5. Criar identidade

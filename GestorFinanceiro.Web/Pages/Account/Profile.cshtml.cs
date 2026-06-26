@@ -78,7 +78,7 @@ namespace GestorFinanceiro.Web.Pages.Account
             if (!await GuardarUtilizadorAsync(utilizador))
                 return Page();
 
-            await AtualizarClaimsAsync(utilizador.Username, utilizador.Email);
+            await AtualizarClaimsAsync(utilizador.Username, utilizador.Email, utilizador.ImagemPerfil ?? "");
             TempData["Sucesso"] = "Perfil atualizado com sucesso.";
             return RedirectToPage();
         }
@@ -125,6 +125,7 @@ namespace GestorFinanceiro.Web.Pages.Account
             if (!await GuardarUtilizadorAsync(atual))
                 return Page();
 
+            await AtualizarClaimsAsync(User.Identity!.Name!, User.FindFirstValue(ClaimTypes.Email)!, url);
             TempData["Sucesso"] = "Imagem de perfil atualizada.";
             return RedirectToPage();
         }
@@ -197,14 +198,15 @@ namespace GestorFinanceiro.Web.Pages.Account
             }
         }
 
-        private async Task AtualizarClaimsAsync(string username, string email)
+        private async Task AtualizarClaimsAsync(string username, string email, string imagemPerfil = "")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, userId),
                 new(ClaimTypes.Name, username),
-                new(ClaimTypes.Email, email)
+                new(ClaimTypes.Email, email),
+                new("ImagemPerfil", imagemPerfil)
             };
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
