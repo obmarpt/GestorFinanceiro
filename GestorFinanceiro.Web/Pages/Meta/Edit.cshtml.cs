@@ -89,7 +89,7 @@ namespace GestorFinanceiro.Web.Pages.Meta
                     return Page();
                 }
 
-                TempData["Sucesso"] = "Meta atualizada com sucesso.";
+                TempData["Sucesso"] = "Conta Poupança atualizada com sucesso.";
                 return RedirectToPage("/Dashboard/Index");
             }
             catch (HttpRequestException ex)

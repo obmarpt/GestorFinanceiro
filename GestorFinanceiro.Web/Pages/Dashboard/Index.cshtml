@@ -16,7 +16,7 @@
         </div>
         <div class="dashboard-header-actions">
             <a asp-page="/SessaoFinanceira/Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
-            <a asp-page="/Meta/Create" class="btn-app btn-app-primary">🎯 Nova Poupança</a>
+            <a asp-page="/Meta/Create" class="btn-app btn-app-primary">🎯 Nova Meta</a>
             @if (Model.ResumoPorSessao.Count >= 2)
             {
                 <a asp-page="/Transferencia/Transferir" class="btn-app btn-app-primary">⇄ Transferir</a>
@@ -125,7 +125,7 @@
                     </button>
                     <button type="button" class="btn-app btn-app-success"
                             onclick="toggleMetaForm('bolsa-meta')">
-                        🎯 Para Poupança
+                        🎯 Para conta poupança
                     </button>
                 </div>
 
@@ -180,15 +180,15 @@
     @* METAS *@
     <section class="section-block section-block--metas">
         <div class="sessions-header">
-            <h2 class="section-title mb-0">As minhas poupanças</h2>
-            <a asp-page="/Meta/Create" class="btn-app btn-app-sm btn-app-outline">+ Nova Poupança</a>
+            <h2 class="section-title mb-0">As minhas contas poupanças</h2>
+            <a asp-page="/Meta/Create" class="btn-app btn-app-sm btn-app-outline">+ Nova conta poupança</a>
         </div>
 
         @if (!Model.Metas.Any())
         {
             <div class="empty-state">
-                <p>Ainda não tens uma poupança definida. Cria a tua primeira meta de poupança.</p>
-                <a asp-page="/Meta/Create" class="btn-app btn-app-success">Criar poupança</a>
+                <p>Ainda não tens metas definidas. Cria a tua primeira conta poupança.</p>
+                <a asp-page="/Meta/Create" class="btn-app btn-app-success">Criar conta poupança</a>
             </div>
         }
         else
@@ -222,12 +222,18 @@
                             <span class="meta-valor-alvo">@meta.ValorAlvo.ToString("N2") €</span>
                         </div>
                         <div class="meta-acoes">
-                            <button type="button" class="btn-app btn-app-sm btn-app-success" onclick="toggleMetaForm('depositar-@meta.Id')">💰 Depositar</button>
-                            <button type="button" class="btn-app btn-app-sm btn-app-outline" onclick="toggleMetaForm('levantar-@meta.Id')">💸 Levantar</button>
+                            <button type="button" class="btn-app btn-app-sm btn-app-success" onclick="toggleMetaForm('depositar-@meta.Id')">↑ Depositar</button>
+                            <button type="button" class="btn-app btn-app-sm btn-app-danger" onclick="toggleMetaForm('levantar-@meta.Id')">↓ Levantar</button>
                         </div>
                         <div id="depositar-@meta.Id" class="meta-form" style="display:none">
                             <form method="post" asp-page-handler="Depositar" class="meta-form-inner">
                                 <input type="hidden" name="MetaId" value="@meta.Id" />
+                                <select name="SessaoOrigemId" class="form-control">
+                                    @foreach (var s in Model.ResumoPorSessao)
+                                    {
+                                        <option value="@s.SessaoId">@s.Nome (@s.Saldo.ToString("N2") €)</option>
+                                    }
+                                </select>
                                 <input type="number" name="Valor" class="form-control" placeholder="Valor (€)" step="0.01" min="0.01" />
                                 <div class="meta-form-actions">
                                     <button type="submit" class="btn-app btn-app-sm btn-app-success">Confirmar</button>
@@ -238,6 +244,12 @@
                         <div id="levantar-@meta.Id" class="meta-form" style="display:none">
                             <form method="post" asp-page-handler="Levantar" class="meta-form-inner">
                                 <input type="hidden" name="MetaId" value="@meta.Id" />
+                                <select name="SessaoDestinoId" class="form-control">
+                                    @foreach (var s in Model.ResumoPorSessao)
+                                    {
+                                        <option value="@s.SessaoId">@s.Nome</option>
+                                    }
+                                </select>
                                 <input type="number" name="Valor" class="form-control" placeholder="Valor (€)" step="0.01" min="0.01"
                                        max="@meta.ValorAtual.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
                                 <div class="meta-form-actions">
@@ -260,7 +272,7 @@
         @if (!Model.Historico.Any())
         {
             <div class="empty-state empty-state--compact">
-                <p>Ainda não há transferências ou movimentos de poupanças registados.</p>
+                <p>Ainda não há transferências ou movimentos de contas poupanças registados.</p>
             </div>
         }
         else
@@ -269,7 +281,7 @@
                 @foreach (var item in Model.Historico)
                 {
                     <div class="historico-item">
-                        <span class="historico-icone @(item.Tipo.Contains("Deposito") ? "historico-icone--entrada" : item.Tipo.Contains("Levantamento") ? "historico-icone--saida" : "")">
+                        <span class="historico-icone @(item.Tipo == "Receita" || item.Tipo.Contains("Deposito") ? "historico-icone--entrada" : item.Tipo == "Despesa" || item.Tipo.Contains("Levantamento") ? "historico-icone--saida" : "")">
                             @item.Icone
                         </span>
                         <div class="historico-info">

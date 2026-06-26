@@ -515,7 +515,7 @@ body {
 }
 
     .kpi-card--saldo-pos .kpi-icon {
-        background: rgba(var(--success-rgb), 0.25);
+        background: rgba(var(--primary-rgb), 0.25);
         color: var(--success);
     }
 
