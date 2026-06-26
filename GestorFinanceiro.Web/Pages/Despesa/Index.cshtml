@@ -1,115 +1,84 @@
-@page "{sessaoId:int}"
-@model GestorFinanceiro.Web.Pages.Despesa.IndexModel
-
-@{
-    ViewData["Title"] = "Despesas";
-    var total = Model.Despesas.Sum(d => d.Valor);
-}
-
-<div class="dashboard-container">
-
-    <partial name="_StatusMessages" />
-
-    <div class="dashboard-header">
-        <div>
-            <h1 class="page-title">Despesas</h1>
-            <p class="subtitle">@Model.SessaoNome</p>
-        </div>
-        <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">➕ Nova Despesa</a>
-    </div>    <div class="mt-3 d-flex gap-3 flex-wrap">
-        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
-        <a asp-page="/SessaoFinanceira/Index" class="back-link">Todas as sessões</a>
+@page "{sessaoId:int}"
+@model GestorFinanceiro.Web.Pages.Despesa.IndexModel
+
+@{
+    ViewData["Title"] = "Despesas";
+    var total = Model.Despesas.Sum(d => d.Valor);
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Despesas</h1>
+            <p class="subtitle">@Model.SessaoNome</p>
+        </div>
+        <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">➕ Nova Despesa</a>
     </div>
-
-    @if (!string.IsNullOrEmpty(Model.MensagemErro))
-    {
-        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
-    }
-    else if (Model.Despesas.Any())
-    {
-        <div class="summary-cards summary-cards--compact mb-4">
-            <div class="summary-card summary-card--despesas">
-                <span class="summary-label">Total nesta sessão</span>
-                <div class="value value--hero">@total.ToString("N2") €</div>
-            </div>
-            <div class="summary-card summary-card--sessions">
-                <span class="summary-label">Registos</span>
-                <div class="value value--hero">@Model.Despesas.Count</div>
-            </div>
-        </div>
-    }
-
-    <div class="sessions-card section-block">
-
-        @if (!Model.Despesas.Any() && string.IsNullOrEmpty(Model.MensagemErro))
-        {
-            <div class="empty-state">
-                <div class="empty-state-icon">💳</div>
-                <p>Sem dados disponíveis. Ainda não existem despesas nesta sessão.</p>
-                <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">Registar primeira despesa</a>
-            </div>
-        }
-        else if (Model.Despesas.Any())
-        {
-            <div class="record-cards">
-                @foreach (var despesa in Model.Despesas)
-                {
-                    <div class="record-card record-card--despesa">
-                        <div class="record-card-body">
-                            <h3 class="record-title">@despesa.Descricao</h3>
-                            <span class="record-date">@despesa.Data.ToString("dd/MM/yyyy")</span>
-                            @if (despesa.Categoria != null)
-                            {
-                                <span class="record-tag">@despesa.Categoria.Nome</span>
-                            }
-                            <div class="record-amount amount-negative">@despesa.Valor.ToString("N2") €</div>
-                        </div>
-                        <div class="record-card-actions">
-                            <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
-                               class="btn-app btn-app-sm btn-app-outline">Editar</a>
-                            <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
-                               class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="mt-4">
-                <h2 class="section-title section-title--sm">Vista em tabela</h2>
-                <div class="table-responsive">
-                    <table class="table table-app align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Descrição</th>
-                                <th>Valor</th>
-                                <th>Data</th>
-                                <th>Categoria</th>
-                                <th class="text-end">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var despesa in Model.Despesas)
-                            {
-                                <tr>
-                                    <td class="fw-semibold">@despesa.Descricao</td>
-                                    <td class="amount-negative fw-semibold">@despesa.Valor.ToString("N2") €</td>
-                                    <td>@despesa.Data.ToString("dd/MM/yyyy")</td>
-                                    <td>@(despesa.Categoria?.Nome ?? "—")</td>
-                                    <td class="text-end table-actions">
-                                        <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
-                                           class="btn-app btn-app-sm btn-app-outline me-1">Editar</a>
-                                        <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
-                                           class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
-
-    </div>
-
-</div>
-
+
+    <div class="mt-3 d-flex gap-3 flex-wrap">
+        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
+        <a asp-page="/SessaoFinanceira/Index" class="back-link">Todas as sessões</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+    else if (Model.Despesas.Any())
+    {
+        <div class="summary-cards summary-cards--compact mb-4">
+            <div class="summary-card summary-card--despesas">
+                <span class="summary-label">Total nesta sessão</span>
+                <div class="value value--hero">@total.ToString("N2") €</div>
+            </div>
+            <div class="summary-card summary-card--sessions">
+                <span class="summary-label">Registos</span>
+                <div class="value value--hero">@Model.Despesas.Count</div>
+            </div>
+        </div>
+    }
+
+    <div class="sessions-card section-block">
+        @if (!Model.Despesas.Any() && string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="empty-state">
+                <p>Sem dados disponíveis. Ainda não existem despesas nesta sessão.</p>
+                <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">Registar primeira despesa</a>
+            </div>
+        }
+        else if (Model.Despesas.Any())
+        {
+            <div class="historico-list">
+                @foreach (var despesa in Model.Despesas)
+                {
+                    <div class="historico-item">
+                        <span class="historico-icone historico-icone--saida">↓</span>
+                        <div class="historico-info">
+                            <span class="historico-descricao">@despesa.Descricao</span>
+                            <span class="historico-tipo">
+                                @despesa.Data.ToString("dd MMM yyyy")
+                                @if (despesa.Categoria != null)
+                                {
+                                    <span style="margin-left:0.5rem; background:var(--surface-muted); border:1px solid var(--border); border-radius:999px; padding:0.1rem 0.5rem; font-size:0.7rem">@despesa.Categoria.Nome</span>
+                                }
+                            </span>
+                        </div>
+                        <div class="historico-right">
+                            <span class="historico-valor" style="color:var(--danger)">@despesa.Valor.ToString("N2") €</span>
+                            <div style="display:flex; gap:0.4rem; margin-top:0.25rem; justify-content:flex-end">
+                                <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
+                                   class="btn-app btn-app-sm btn-app-outline">Editar</a>
+                                <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@despesa.Id"
+                                   class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>

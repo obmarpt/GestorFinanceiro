@@ -41,28 +41,30 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
         public async Task OnGetAsync() => await CarregarDadosAsync();
 
-        public async Task<IActionResult> OnPostDepositarAsync(int metaId, decimal valor)
+        public async Task<IActionResult> OnPostDepositarAsync(int metaId, int sessaoOrigemId, decimal valor)
         {
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/depositar", new { Valor = valor });
+                var payload = new { SessaoOrigemId = sessaoOrigemId, Valor = valor };
+                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/depositar", payload);
                 TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Depósito registado com sucesso."
+                    ? "Depósito realizado com sucesso."
                     : (await response.Content.ReadAsStringAsync()).Trim('"');
             }
             catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
             return RedirectToPage();
         }
 
-        public async Task<IActionResult> OnPostLevantarAsync(int metaId, decimal valor)
+        public async Task<IActionResult> OnPostLevantarAsync(int metaId, int sessaoDestinoId, decimal valor)
         {
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/levantar", new { Valor = valor });
+                var payload = new { SessaoDestinoId = sessaoDestinoId, Valor = valor };
+                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/levantar", payload);
                 TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Levantamento registado com sucesso."
+                    ? "Levantamento realizado com sucesso."
                     : (await response.Content.ReadAsStringAsync()).Trim('"');
             }
             catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
@@ -94,8 +96,36 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 var payload = new { UtilizadorId = utilizadorId, MetaDestinoId = metaDestinoId, Valor = valor };
                 var response = await client.PostAsJsonAsync("api/Bolsa/transferir-meta", payload);
                 TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Transferência para meta realizada com sucesso."
+                    ? "Transferência para poupança realizada com sucesso."
                     : (await response.Content.ReadAsStringAsync()).Trim('"');
+            }
+            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostApagarHistoricoAsync(int registoId, string tipoRegisto)
+        {
+            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            try
+            {
+                string url = tipoRegisto switch
+                {
+                    "receita" => $"api/Receita/{registoId}",
+                    "despesa" => $"api/Despesa/{registoId}",
+                    "metamovimento" => $"api/Meta/movimentos/{registoId}",
+                    _ => ""
+                };
+
+                if (string.IsNullOrEmpty(url))
+                {
+                    TempData["Erro"] = "Tipo de registo desconhecido.";
+                    return RedirectToPage();
+                }
+
+                var response = await client.DeleteAsync(url);
+                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
+                    ? "Registo apagado com sucesso."
+                    : "Não foi possível apagar o registo.";
             }
             catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
             return RedirectToPage();
@@ -170,10 +200,45 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
                 // Historico
                 var metaIds = Metas.Select(m => m.Id).ToHashSet();
+                var sessaoNomes = sessoes.ToDictionary(s => s.Id, s => s.Nome);
+
+                var itensReceitas = receitas
+                    .Select(r => new HistoricoItemViewModel
+                    {
+                        RegistoId = r.Id,
+                        TipoRegisto = "receita",
+                        Data = r.Data,
+                        Tipo = "Receita",
+                        Icone = "↑",
+                        Valor = r.Valor,
+                        Descricao = $"{r.Descricao} · {(sessaoNomes.TryGetValue(r.SessaoFinanceiraId, out var nomeR) ? nomeR : "")}"
+                    });
+
+                var itensDespesas = despesas
+                    .Where(d => d.Descricao == null || !d.Descricao.Contains("→") && !d.Descricao.Contains("poupança"))
+                    .Select(d => new HistoricoItemViewModel
+                    {
+                        RegistoId = d.Id,
+                        TipoRegisto = "despesa",
+                        Data = d.Data,
+                        Tipo = "Despesa",
+                        Icone = "↓",
+                        Valor = d.Valor,
+                        Descricao = $"{d.Descricao} · {(sessaoNomes.TryGetValue(d.SessaoFinanceiraId, out var nomeD) ? nomeD : "")}"
+                    });
 
                 var transferencias = despesas
                     .Where(d => d.Descricao != null && d.Descricao.Contains("→"))
-                    .Select(d => new HistoricoItemViewModel { Data = d.Data, Tipo = "Transferencia", Icone = "⇄", Valor = d.Valor, Descricao = d.Descricao ?? "" });
+                    .Select(d => new HistoricoItemViewModel
+                    {
+                        RegistoId = d.Id,
+                        TipoRegisto = "despesa",
+                        Data = d.Data,
+                        Tipo = "Transferencia",
+                        Icone = "⇄",
+                        Valor = d.Valor,
+                        Descricao = d.Descricao ?? ""
+                    });
 
                 var movimentosResponse = await client.GetAsync("api/Meta/movimentos");
                 IEnumerable<HistoricoItemViewModel> metaMovimentos = [];
@@ -183,15 +248,24 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     metaMovimentos = movimentos.Where(m => metaIds.Contains(m.MetaId))
                         .Select(m => new HistoricoItemViewModel
                         {
+                            RegistoId = m.Id,
+                            TipoRegisto = "metamovimento",
                             Data = m.Data,
-                            Tipo = m.Tipo == "Deposito" ? "Deposito na conta Poupança" : "Levantamento da conta Poupança",
+                            Tipo = m.Tipo == "Deposito" ? "Deposito na Conta Poupança" : "Levantamento da Conta Poupança",
                             Icone = m.Tipo == "Deposito" ? "↑" : "↓",
                             Valor = m.Valor,
                             Descricao = $"Conta Poupança: {Metas.FirstOrDefault(meta => meta.Id == m.MetaId)?.Nome ?? ""}"
                         });
                 }
 
-                Historico = transferencias.Concat(metaMovimentos).OrderByDescending(h => h.Data).Take(10).ToList();
+                Historico = itensReceitas
+                    .Concat(itensDespesas)
+                    .Concat(transferencias)
+                    .Concat(metaMovimentos)
+                    .OrderByDescending(h => h.Data)
+                    .ThenByDescending(h => h.RegistoId)
+                    .Take(10)
+                    .ToList();
             }
             catch (HttpRequestException ex)
             {
