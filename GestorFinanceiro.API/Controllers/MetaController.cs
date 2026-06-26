@@ -28,8 +28,7 @@ namespace GestorFinanceiro.API.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var meta = await _context.Metas.FindAsync(id);
-            if (meta == null)
-                return NotFound();
+            if (meta == null) return NotFound();
             return Ok(meta);
         }
 
@@ -46,8 +45,7 @@ namespace GestorFinanceiro.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Criar([FromBody] MetaRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var meta = new Meta
             {
@@ -61,19 +59,16 @@ namespace GestorFinanceiro.API.Controllers
 
             _context.Metas.Add(meta);
             await _context.SaveChangesAsync();
-
             return CreatedAtAction(nameof(GetById), new { id = meta.Id }, meta);
         }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> Editar(int id, [FromBody] MetaRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var meta = await _context.Metas.FindAsync(id);
-            if (meta == null)
-                return NotFound();
+            if (meta == null) return NotFound();
 
             meta.Nome = request.Nome.Trim();
             meta.Descricao = string.IsNullOrWhiteSpace(request.Descricao) ? null : request.Descricao.Trim();
@@ -88,8 +83,7 @@ namespace GestorFinanceiro.API.Controllers
         public async Task<IActionResult> Apagar(int id)
         {
             var meta = await _context.Metas.FindAsync(id);
-            if (meta == null)
-                return NotFound();
+            if (meta == null) return NotFound();
 
             _context.Metas.Remove(meta);
             await _context.SaveChangesAsync();
@@ -99,15 +93,36 @@ namespace GestorFinanceiro.API.Controllers
         [HttpPost("{id}/depositar")]
         public async Task<IActionResult> Depositar(int id, [FromBody] MetaDepositarRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var meta = await _context.Metas.FindAsync(id);
-            if (meta == null)
-                return NotFound("Meta não encontrada.");
+            if (meta == null) return NotFound("Poupança não encontrada.");
 
-            if (request.Valor <= 0)
-                return BadRequest("O valor deve ser maior que zero.");
+            var sessao = await _context.SessoesFinanceiras.FindAsync(request.SessaoOrigemId);
+            if (sessao == null) return NotFound("Sessão não encontrada.");
+
+            var totalReceitas = await _context.Receitas
+                .Where(r => r.SessaoFinanceiraId == request.SessaoOrigemId)
+                .SumAsync(r => r.Valor);
+
+            var totalDespesas = await _context.Despesas
+                .Where(d => d.SessaoFinanceiraId == request.SessaoOrigemId)
+                .SumAsync(d => d.Valor);
+
+            var saldo = totalReceitas - totalDespesas;
+
+            if (request.Valor > saldo)
+                return BadRequest($"Saldo insuficiente na sessão. Disponível: {saldo:N2} €.");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            _context.Despesas.Add(new Despesa
+            {
+                Descricao = $"Depósito para poupança: {meta.Nome}",
+                Valor = request.Valor,
+                Data = DateTime.Now,
+                SessaoFinanceiraId = request.SessaoOrigemId
+            });
 
             meta.ValorAtual += request.Valor;
 
@@ -120,21 +135,34 @@ namespace GestorFinanceiro.API.Controllers
             });
 
             await _context.SaveChangesAsync();
-            return Ok(new { mensagem = "Depósito registado com sucesso." });
+            await transaction.CommitAsync();
+
+            return Ok(new { mensagem = "Depósito realizado com sucesso." });
         }
 
         [HttpPost("{id}/levantar")]
         public async Task<IActionResult> Levantar(int id, [FromBody] MetaLevantarRequest request)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var meta = await _context.Metas.FindAsync(id);
-            if (meta == null)
-                return NotFound("Meta não encontrada.");
+            if (meta == null) return NotFound("Poupança não encontrada.");
 
             if (request.Valor > meta.ValorAtual)
-                return BadRequest($"Valor superior ao disponível na meta ({meta.ValorAtual:N2} €).");
+                return BadRequest($"Valor superior ao disponível na poupança ({meta.ValorAtual:N2} €).");
+
+            var sessao = await _context.SessoesFinanceiras.FindAsync(request.SessaoDestinoId);
+            if (sessao == null) return NotFound("Sessão não encontrada.");
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            _context.Receitas.Add(new Receita
+            {
+                Descricao = $"Levantamento de poupança: {meta.Nome}",
+                Valor = request.Valor,
+                Data = DateTime.Now,
+                SessaoFinanceiraId = request.SessaoDestinoId
+            });
 
             meta.ValorAtual -= request.Valor;
 
@@ -147,7 +175,9 @@ namespace GestorFinanceiro.API.Controllers
             });
 
             await _context.SaveChangesAsync();
-            return Ok(new { mensagem = "Levantamento registado com sucesso." });
+            await transaction.CommitAsync();
+
+            return Ok(new { mensagem = "Levantamento realizado com sucesso." });
         }
     }
 }

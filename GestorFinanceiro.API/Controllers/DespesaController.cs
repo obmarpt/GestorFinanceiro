@@ -47,7 +47,9 @@ namespace GestorFinanceiro.API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            despesa.Data = despesa.Data.Date + DateTime.Now.TimeOfDay;
 
+            _context.Despesas.Add(despesa);
             _context.Despesas.Add(despesa);
             await _context.SaveChangesAsync();
 

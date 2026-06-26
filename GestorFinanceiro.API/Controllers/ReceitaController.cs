@@ -42,7 +42,9 @@ namespace GestorFinanceiro.API.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            receita.Data = receita.Data.Date + DateTime.Now.TimeOfDay;
 
+            _context.Receitas.Add(receita);
             _context.Receitas.Add(receita);
             await _context.SaveChangesAsync();
 
