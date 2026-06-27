@@ -23,7 +23,7 @@ jobs:
       - name: Build with dotnet
         run: dotnet build GestorFinanceiro.Web --configuration Release
 
-      - name: Publish API
+      - name: Publish Web
         run: dotnet publish GestorFinanceiro.Web -c Release -o publish
 
       - name: Upload artifact for deployment job

@@ -62,7 +62,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             }
             catch (HttpRequestException ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}. Confirme que a API está a correr em {_configuration["ApiBaseUrl"]}.";
+                MensagemErro = $"Erro de ligação à API: {ex.Message}.";
                 return Page();
             }
 

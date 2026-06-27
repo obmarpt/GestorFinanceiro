@@ -1,0 +1,67 @@
+name: Build and deploy API to Azure Web App
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'GestorFinanceiro.API/**'
+      - 'GestorFinanceiro.Data/**'
+      - '.github/workflows/master_gestorfinanceiro-api.yml'
+  workflow_dispatch:
+
+env:
+  AZURE_API_APP_NAME: gestorfinanceiro-e9h0ctd4gnb9fqca
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build API
+        run: dotnet build GestorFinanceiro.API --configuration Release
+
+      - name: Publish API
+        run: dotnet publish GestorFinanceiro.API -c Release -o publish
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-app
+          path: publish
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: api-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7E08AF5EE17D4558B6C7AC67314AC7E8 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_70F45CB2E3F3493DAFD87629BD4DB643 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_22E95C4C6CCA4FCD8912EE71406C6175 }}
+
+      - name: Deploy API to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_API_APP_NAME }}
+          slot-name: Production
+          package: .

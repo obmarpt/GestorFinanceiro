@@ -1,15 +1,8 @@
 @page "/Dashboard/Index"
 @model GestorFinanceiro.Web.Pages.Dashboard.IndexModel
-@inject IConfiguration Configuration
-@inject IWebHostEnvironment Env
 
 @{
     ViewData["Title"] = "Dashboard";
-    var apiBaseUrl = Configuration["ApiBaseUrl"]
-        ?? (Env.IsDevelopment()
-            ? "http://localhost:5281"
-            : "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net");
-    var signalRHubUrl = $"{apiBaseUrl.TrimEnd('/')}/financeHub";
 }
 
 <div class="dashboard-container dashboard-layout">
@@ -357,7 +350,7 @@
 
         // SignalR — atualiza o dashboard automaticamente quando há transferências
         const connection = new signalR.HubConnectionBuilder()
-        .withUrl("@signalRHubUrl")
+        .withUrl("/financeHub")
         .withAutomaticReconnect()
         .build();
 
