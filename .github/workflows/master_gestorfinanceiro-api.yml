@@ -1,13 +1,7 @@
 name: Build and deploy API to Azure Web App
 
+# Desativado — API está integrada no GestorFinanceiro.Web (1 App Service)
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'GestorFinanceiro.API/**'
-      - 'GestorFinanceiro.Data/**'
-      - '.github/workflows/master_gestorfinanceiro-api.yml'
   workflow_dispatch:
 
 env:
