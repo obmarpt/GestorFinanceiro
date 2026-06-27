@@ -52,8 +52,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapStaticAssets();
-app.MapRazorPages().WithStaticAssets();
+app.MapRazorPages();
 
 // Criar utilizador Admin se não existir
 using (var scope = app.Services.CreateScope())
