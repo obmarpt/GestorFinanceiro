@@ -12,10 +12,12 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
     public class CreateModel : PageModel
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public CreateModel(IHttpClientFactory httpClientFactory)
+        public CreateModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         [BindProperty]
@@ -60,7 +62,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             }
             catch (HttpRequestException ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}. Confirme que a API está a correr em http://localhost:5281.";
+                MensagemErro = $"Erro de ligação à API: {ex.Message}. Confirme que a API está a correr em {_configuration["ApiBaseUrl"]}.";
                 return Page();
             }
 

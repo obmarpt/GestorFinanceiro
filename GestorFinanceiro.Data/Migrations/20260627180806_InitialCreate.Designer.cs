@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestorFinanceiro.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260627175324_InitialCreate")]
+    [Migration("20260627180806_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
