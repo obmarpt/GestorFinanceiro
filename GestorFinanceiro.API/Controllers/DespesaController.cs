@@ -1,6 +1,8 @@
+using GestorFinanceiro.API.Hubs;
 using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.API.Controllers
@@ -10,57 +12,49 @@ namespace GestorFinanceiro.API.Controllers
     public class DespesaController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public DespesaController(ApplicationDbContext context)
+        public DespesaController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
-        // GET: api/Despesa
         [HttpGet]
         public IActionResult GetDespesas()
         {
             var despesas = _context.Despesas
                 .Include(d => d.Categoria)
                 .ToList();
-
             return Ok(despesas);
         }
 
-        // GET: api/Despesa/5
         [HttpGet("{id}")]
         public IActionResult GetDespesa(int id)
         {
             var despesa = _context.Despesas
                 .Include(d => d.Categoria)
                 .FirstOrDefault(d => d.Id == id);
-
             if (despesa == null)
                 return NotFound("Despesa não encontrada.");
-
             return Ok(despesa);
         }
 
-        // POST: api/Despesa
         [HttpPost]
         public async Task<IActionResult> CriarDespesa([FromBody] Despesa despesa)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            despesa.Data = despesa.Data.Date + DateTime.Now.TimeOfDay;
 
-            _context.Despesas.Add(despesa);
+            despesa.Data = despesa.Data.Date + DateTime.Now.TimeOfDay;
             _context.Despesas.Add(despesa);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetDespesa),
-                new { id = despesa.Id },
-                despesa
-            );
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", despesa.SessaoFinanceiraId);
+
+            return CreatedAtAction(nameof(GetDespesa), new { id = despesa.Id }, despesa);
         }
 
-        // PUT: api/Despesa/5
         [HttpPut("{id}")]
         public async Task<IActionResult> EditarDespesa(int id, [FromBody] Despesa despesa)
         {
@@ -68,7 +62,6 @@ namespace GestorFinanceiro.API.Controllers
                 return BadRequest("O ID da despesa é inválido.");
 
             var despesaExistente = await _context.Despesas.FindAsync(id);
-
             if (despesaExistente == null)
                 return NotFound("Despesa não encontrada.");
 
@@ -79,20 +72,23 @@ namespace GestorFinanceiro.API.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", despesaExistente.SessaoFinanceiraId);
+
             return NoContent();
         }
 
-        // DELETE: api/Despesa/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarDespesa(int id)
         {
             var despesa = await _context.Despesas.FindAsync(id);
-
             if (despesa == null)
                 return NotFound("Despesa não encontrada.");
 
+            var sessaoId = despesa.SessaoFinanceiraId;
             _context.Despesas.Remove(despesa);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", sessaoId);
 
             return NoContent();
         }

@@ -167,7 +167,17 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
                         .OrderByDescending(x => x.DataCriacao).ToList();
 
-                    (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(ResumoPorSessao);
+                    // Excluir transferências e movimentos de poupança dos totais globais
+                    var receitasReais = receitas.Where(r =>
+                        r.Descricao == null ||
+                        (!r.Descricao.Contains("←") && !r.Descricao.Contains("Levantamento de poupança"))).ToList();
+
+                    var despesasReais = despesas.Where(d =>
+                        d.Descricao == null ||
+                        (!d.Descricao.Contains("→") && !d.Descricao.Contains("Depósito para poupança"))).ToList();
+
+                    var resumosReais = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitasReais, despesasReais).ToList();
+                    (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(resumosReais);
 
                     ChartDataJson = JsonSerializer.Serialize(new
                     {

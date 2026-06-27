@@ -1,6 +1,8 @@
-﻿using GestorFinanceiro.Data.Context;
+﻿using GestorFinanceiro.API.Hubs;
+using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -11,10 +13,12 @@ namespace GestorFinanceiro.API.Controllers
     public class BolsaController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public BolsaController(ApplicationDbContext context)
+        public BolsaController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet("{utilizadorId}")]
@@ -75,6 +79,8 @@ namespace GestorFinanceiro.API.Controllers
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoId);
+
             return Ok(new { mensagem = "Sessão apagada com sucesso." });
         }
 
@@ -103,6 +109,9 @@ namespace GestorFinanceiro.API.Controllers
             });
 
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoDestinoId);
+
             return Ok(new { mensagem = "Transferência realizada com sucesso." });
         }
 
@@ -132,6 +141,9 @@ namespace GestorFinanceiro.API.Controllers
             });
 
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", 0);
+
             return Ok(new { mensagem = "Transferência para meta realizada com sucesso." });
         }
     }
