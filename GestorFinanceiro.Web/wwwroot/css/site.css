@@ -188,11 +188,11 @@ body {
 /* BLOCO PRINCIPAL */
 /* ===================== */
 .finance-hero {
-    padding: 30px;
-    border-radius: 20px;
-    color: #1e293b;
-    background: linear-gradient(135deg, #ffffff, #f1f5f9);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    background: var(--card) !important;
+    border: 1px solid var(--border);
+    border-radius: var(--app-radius-lg);
+    padding: var(--card-padding-lg);
+    color: var(--text);
 }
 
 /* header */
@@ -200,16 +200,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
+    color: var(--text-muted);
+    font-size: 0.875rem;
 }
 
-    .finance-header h2 {
-        font-size: 18px;
-        font-weight: 600;
-        background: #e2e8f0;
-        padding: 6px 12px;
-        border-radius: 8px;
-    }
+    
 
 /* saldo */
 .finance-main {
