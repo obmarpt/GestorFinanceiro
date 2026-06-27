@@ -43,6 +43,51 @@ namespace GestorFinanceiro.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Bolsas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UtilizadorId = table.Column<int>(type: "int", nullable: false),
+                    Saldo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DataAtualizacao = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Bolsas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Bolsas_Utilizadores_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "Utilizadores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Metas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nome = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Descricao = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ValorAlvo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ValorAtual = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UtilizadorId = table.Column<int>(type: "int", nullable: false),
+                    DataCriacao = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Metas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Metas_Utilizadores_UtilizadorId",
+                        column: x => x.UtilizadorId,
+                        principalTable: "Utilizadores",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SessoesFinanceiras",
                 columns: table => new
                 {
@@ -62,6 +107,28 @@ namespace GestorFinanceiro.Data.Migrations
                         principalTable: "Utilizadores",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MetaMovimentos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MetaId = table.Column<int>(type: "int", nullable: false),
+                    Tipo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Valor = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Data = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MetaMovimentos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MetaMovimentos_Metas_MetaId",
+                        column: x => x.MetaId,
+                        principalTable: "Metas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -164,6 +231,11 @@ namespace GestorFinanceiro.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Bolsas_UtilizadorId",
+                table: "Bolsas",
+                column: "UtilizadorId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Despesas_CategoriaId",
                 table: "Despesas",
                 column: "CategoriaId");
@@ -172,6 +244,16 @@ namespace GestorFinanceiro.Data.Migrations
                 name: "IX_Despesas_SessaoFinanceiraId",
                 table: "Despesas",
                 column: "SessaoFinanceiraId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MetaMovimentos_MetaId",
+                table: "MetaMovimentos",
+                column: "MetaId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Metas_UtilizadorId",
+                table: "Metas",
+                column: "UtilizadorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Receitas_SessaoFinanceiraId",
@@ -198,7 +280,13 @@ namespace GestorFinanceiro.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Bolsas");
+
+            migrationBuilder.DropTable(
                 name: "Despesas");
+
+            migrationBuilder.DropTable(
+                name: "MetaMovimentos");
 
             migrationBuilder.DropTable(
                 name: "Receitas");
@@ -208,6 +296,9 @@ namespace GestorFinanceiro.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "SessaoFinanceiraCategorias");
+
+            migrationBuilder.DropTable(
+                name: "Metas");
 
             migrationBuilder.DropTable(
                 name: "Categorias");
