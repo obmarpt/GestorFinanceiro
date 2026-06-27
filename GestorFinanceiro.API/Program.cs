@@ -11,6 +11,24 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+<<<<<<< HEAD
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// DbContext
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (!string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
+else
+{
+    Console.WriteLine("⚠️ Connection string não encontrada!");
+}
+=======
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -18,9 +36,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"))
            .ConfigureWarnings(w => w.Ignore(
                Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+>>>>>>> master
 
 builder.Services.AddSignalR();
 
+<<<<<<< HEAD
+// Auth
+=======
 // CORS para permitir ligações SignalR da app Web
 builder.Services.AddCors(options =>
 {
@@ -35,11 +57,25 @@ builder.Services.AddCors(options =>
     });
 });
 
+>>>>>>> master
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+<<<<<<< HEAD
+// ✅ PORTA (OBRIGATÓRIO)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://*:{port}");
+
+// Swagger sempre disponível (opcional)
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// ⚠️ PODES comentar se der problemas
+// app.UseHttpsRedirection();
+
+=======
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -49,6 +85,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("SignalRPolicy");
 
 app.UseHttpsRedirection();
+>>>>>>> master
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
