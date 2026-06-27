@@ -17,19 +17,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // DbContext (protegido para não crashar no Azure)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-if (!string.IsNullOrEmpty(connectionString))
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString)
-               .ConfigureWarnings(w => w.Ignore(
-                   Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-}
-else
-{
-    Console.WriteLine("⚠️ Connection string não encontrada");
-}
+//if (!string.IsNullOrEmpty(connectionString))
+//{
+  //  builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    //    options.UseSqlServer(connectionString)
+      //         .ConfigureWarnings(w => w.Ignore(
+        //           Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+//}
+//else
+//{
+ //   Console.WriteLine("⚠️ Connection string não encontrada");
+//}
 
 // SignalR
 builder.Services.AddSignalR();
