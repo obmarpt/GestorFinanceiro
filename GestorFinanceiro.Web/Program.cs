@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages(options =>
 {
-    options.Conventions.AddPageRoute("/Dashboard/Index", "");
+    options.Conventions.AddPageRoute("/Dashboard/Index", "/Dashboard");
 });
 
 builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
@@ -63,6 +63,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/", () => Results.Redirect("/Dashboard"));
 app.MapRazorPages();
 
 app.Run();
