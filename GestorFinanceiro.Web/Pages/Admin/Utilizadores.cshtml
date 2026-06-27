@@ -14,7 +14,7 @@
             <h1 class="page-title">Gestão de Utilizadores</h1>
             <p class="subtitle">Painel de administração</p>
         </div>
-        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">Dashboard</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary btn-app-sm">Dashboard</a>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.MensagemErro))

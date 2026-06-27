@@ -84,7 +84,7 @@ namespace GestorFinanceiro.Web.Pages.Transferencia
                 }
 
                 TempData["Sucesso"] = "Saldo transferido com sucesso.";
-                return RedirectToPage("/Dashboard/Index");
+                return RedirectToAction("Index", "Dashboard");
             }
             catch (HttpRequestException ex)
             {

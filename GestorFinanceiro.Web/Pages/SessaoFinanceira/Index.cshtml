@@ -17,7 +17,7 @@
         <a asp-page="Create" class="btn-app btn-app-success">➕ Nova Sessão</a>
     </div>
     <div class="mt-3">
-        <a asp-page="/Dashboard/Index" class="back-link">← Dashboard</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="back-link">← Dashboard</a>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.MensagemErro))

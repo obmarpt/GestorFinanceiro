@@ -14,7 +14,7 @@
             <h1 class="page-title">Nova poupança</h1>
             <p class="subtitle">Define um objetivo de poupança</p>
         </div>
-        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
     </div>
 
     <div class="sessions-card form-card">
@@ -46,7 +46,7 @@
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn-app btn-app-success">Criar poupança</button>
-                <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary">Cancelar</a>
             </div>
         </form>
 

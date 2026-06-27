@@ -1,5 +1,4 @@
-@page "/Dashboard/Index"
-@model GestorFinanceiro.Web.Pages.Dashboard.IndexModel
+@model GestorFinanceiro.Web.Models.DashboardIndexViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -7,7 +6,7 @@
 
 <div class="dashboard-container dashboard-layout">
 
-    <partial name="_StatusMessages" />
+    <partial name="/Pages/Shared/_StatusMessages" />
 
     <div class="dashboard-header">
         <div>
@@ -30,7 +29,6 @@
         <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
     }
 
-    @* KPI *@
     <section class="section-block section-block--kpi">
         <h2 class="section-title">Visão geral</h2>
         <div class="summary-cards summary-cards--kpi">
@@ -53,7 +51,6 @@
         </div>
     </section>
 
-    @* SALDO HERO *@
     @if (Model.ResumoPorSessao.Any() && string.IsNullOrEmpty(Model.MensagemErro))
     {
         <section class="section-block section-block--saldo">
@@ -74,7 +71,6 @@
         </section>
     }
 
-    @* GRÁFICO *@
     @if (Model.ResumoPorSessao.Any())
     {
         <section class="section-block section-block--chart">
@@ -109,7 +105,6 @@
         </section>
     }
 
-    @* SESSOES *@
     <section class="section-block section-block--sessions">
         <div class="sessions-header">
             <h2 class="section-title mb-0">As minhas sessões</h2>
@@ -147,7 +142,6 @@
         }
     </section>
 
-    @* BOLSA *@
     @if (Model.Bolsa.TemSaldo)
     {
         <section class="section-block section-block--bolsa">
@@ -165,7 +159,7 @@
                     <button type="button" class="btn-app btn-app-success" onclick="toggleMetaForm('bolsa-meta')">🎯 Para conta poupança</button>
                 </div>
                 <div id="bolsa-sessao" class="meta-form" style="display:none">
-                    <form method="post" asp-page-handler="TransferirBolsaSessao" class="meta-form-inner">
+                    <form method="post" asp-action="TransferirBolsaSessao" asp-controller="Dashboard" class="meta-form-inner">
                         <select name="SessaoDestinoId" class="form-control">
                             @foreach (var s in Model.ResumoPorSessao)
                             {
@@ -183,7 +177,7 @@
                 @if (Model.Metas.Any())
                 {
                     <div id="bolsa-meta" class="meta-form" style="display:none">
-                        <form method="post" asp-page-handler="TransferirBolsaMeta" class="meta-form-inner">
+                        <form method="post" asp-action="TransferirBolsaMeta" asp-controller="Dashboard" class="meta-form-inner">
                             <select name="MetaDestinoId" class="form-control">
                                 @foreach (var m in Model.Metas)
                                 {
@@ -203,7 +197,6 @@
         </section>
     }
 
-    @* METAS *@
     <section class="section-block section-block--metas">
         <div class="sessions-header">
             <h2 class="section-title mb-0">As minhas contas poupanças</h2>
@@ -224,10 +217,7 @@
                     var cardClass = meta.Concluida ? "sessao-card--positivo" : "";
                     <article class="sessao-card sessao-card--dashboard @cardClass">
                         <div class="sessao-card-header">
-                            <h3 class="sessao-card-nome">@if (meta.Concluida){
-                                <span>✅ </span>
-                            }
-                            @meta.Nome</h3>
+                            <h3 class="sessao-card-nome">@if (meta.Concluida){ <span>✅ </span> }@meta.Nome</h3>
                             <div class="sessao-card-actions-inline">
                                 <a asp-page="/Meta/Edit" asp-route-id="@meta.Id" class="btn-app btn-app-sm btn-app-outline">Editar</a>
                                 <a asp-page="/Meta/Delete" asp-route-id="@meta.Id" class="btn-app btn-app-sm btn-app-danger">Apagar</a>
@@ -251,7 +241,7 @@
                             <button type="button" class="btn-app btn-app-sm btn-app-danger" onclick="toggleMetaForm('levantar-@meta.Id')">↓ Levantar</button>
                         </div>
                         <div id="depositar-@meta.Id" class="meta-form" style="display:none">
-                            <form method="post" asp-page-handler="Depositar" class="meta-form-inner">
+                            <form method="post" asp-action="Depositar" asp-controller="Dashboard" class="meta-form-inner">
                                 <input type="hidden" name="MetaId" value="@meta.Id" />
                                 <select name="SessaoOrigemId" class="form-control">
                                     @foreach (var s in Model.ResumoPorSessao)
@@ -267,7 +257,7 @@
                             </form>
                         </div>
                         <div id="levantar-@meta.Id" class="meta-form" style="display:none">
-                            <form method="post" asp-page-handler="Levantar" class="meta-form-inner">
+                            <form method="post" asp-action="Levantar" asp-controller="Dashboard" class="meta-form-inner">
                                 <input type="hidden" name="MetaId" value="@meta.Id" />
                                 <select name="SessaoDestinoId" class="form-control">
                                     @foreach (var s in Model.ResumoPorSessao)
@@ -289,7 +279,6 @@
         }
     </section>
 
-    @* HISTORICO *@
     <section class="section-block section-block--historico">
         <div class="sessions-header">
             <h2 class="section-title mb-0">Histórico recente</h2>
@@ -316,7 +305,7 @@
                         <div class="historico-right">
                             <span class="historico-valor">@item.Valor.ToString("N2") €</span>
                             <span class="historico-data">@item.Data.ToString("dd MMM yyyy HH:mm")</span>
-                            <form method="post" asp-page-handler="ApagarHistorico" style="margin-top:0.25rem"
+                            <form method="post" asp-action="ApagarHistorico" asp-controller="Dashboard" style="margin-top:0.25rem"
                                   onsubmit="return confirm('Tens a certeza que queres apagar este registo?')">
                                 <input type="hidden" name="RegistoId" value="@item.RegistoId" />
                                 <input type="hidden" name="TipoRegisto" value="@item.TipoRegisto" />
@@ -331,8 +320,6 @@
 
 </div>
 
-@* Substitui o @section Scripts { ... } do DashboardIndex.cshtml por este: *@
-
 @section Scripts {
     @if (Model.TemDadosGraficos)
     {
@@ -344,29 +331,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
         function toggleMetaForm(id) {
-        var form = document.getElementById(id);
-        if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            var form = document.getElementById(id);
+            if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
 
-        // SignalR — atualiza o dashboard automaticamente quando há transferências
         const connection = new signalR.HubConnectionBuilder()
-        .withUrl("/financeHub")
-        .withAutomaticReconnect()
-        .build();
+            .withUrl("/financeHub")
+            .withAutomaticReconnect()
+            .build();
 
         connection.on("ResumoAtualizado", function () {
-        setTimeout(function () {
-        location.reload();
-        }, 500);
+            setTimeout(function () { location.reload(); }, 500);
         });
 
         connection.start()
-        .then(function () {
-        console.log("SignalR: ligado ao hub com sucesso.");
-        })
-        .catch(function (err) {
-        console.error("SignalR: erro ao ligar ao hub.", err);
-        });
+            .then(function () { console.log("SignalR: ligado ao hub com sucesso."); })
+            .catch(function (err) { console.error("SignalR: erro ao ligar ao hub.", err); });
     </script>
 }
-

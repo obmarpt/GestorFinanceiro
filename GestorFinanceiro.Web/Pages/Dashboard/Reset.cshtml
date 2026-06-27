@@ -12,7 +12,7 @@
             <h1 class="page-title">Resetar movimentos</h1>
             <p class="subtitle">Apaga receitas e/ou despesas de todas as sessões</p>
         </div>
-        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
     </div>
 
     <div class="sessions-card form-card">
@@ -57,7 +57,7 @@
 
             <div class="form-actions">
                 <button type="submit" class="btn-app btn-app-danger">Resetar</button>
-                <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
+                <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary">Cancelar</a>
             </div>
         </form>
 
