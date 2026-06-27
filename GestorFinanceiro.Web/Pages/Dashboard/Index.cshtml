@@ -1,8 +1,10 @@
 @page
 @model GestorFinanceiro.Web.Pages.Dashboard.IndexModel
+@inject IConfiguration Configuration
 
 @{
     ViewData["Title"] = "Dashboard";
+    var signalRHubUrl = $"{(Configuration["ApiBaseUrl"] ?? "http://localhost:5281").TrimEnd('/')}/financeHub";
 }
 
 <div class="dashboard-container dashboard-layout">
@@ -350,7 +352,7 @@
 
         // SignalR — atualiza o dashboard automaticamente quando há transferências
         const connection = new signalR.HubConnectionBuilder()
-        .withUrl("http://localhost:5281/financeHub")
+        .withUrl("@signalRHubUrl")
         .withAutomaticReconnect()
         .build();
 
