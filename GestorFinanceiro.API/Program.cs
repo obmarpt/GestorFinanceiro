@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -12,39 +11,48 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// OpenAPI / Swagger
 builder.Services.AddOpenApi();
 
-// DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"))
            .ConfigureWarnings(w => w.Ignore(
                Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
-// SignalR
 builder.Services.AddSignalR();
 
-// 🔐 Autenticação / Autorização (necessário para [Authorize])
+// CORS para permitir ligações SignalR da app Web
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", policy =>
+    {
+        policy.WithOrigins(
+                "https://localhost:7100",
+                "http://localhost:5243")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// CORS tem de vir antes do UseHttpsRedirection
+app.UseCors("SignalRPolicy");
 
-// ✅ ORDEM CORRETA
+app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Endpoints
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
 

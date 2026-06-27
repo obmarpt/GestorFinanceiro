@@ -1,7 +1,9 @@
-﻿using GestorFinanceiro.API.Models;
+﻿using GestorFinanceiro.API.Hubs;
+using GestorFinanceiro.API.Models;
 using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.API.Controllers
@@ -11,10 +13,12 @@ namespace GestorFinanceiro.API.Controllers
     public class MetaController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public MetaController(ApplicationDbContext context)
+        public MetaController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet]
@@ -59,6 +63,9 @@ namespace GestorFinanceiro.API.Controllers
 
             _context.Metas.Add(meta);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", meta.Id);
+
             return CreatedAtAction(nameof(GetById), new { id = meta.Id }, meta);
         }
 
@@ -76,6 +83,9 @@ namespace GestorFinanceiro.API.Controllers
             meta.ValorAtual = request.ValorAtual;
 
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", meta.Id);
+
             return Ok(meta);
         }
 
@@ -87,6 +97,9 @@ namespace GestorFinanceiro.API.Controllers
 
             _context.Metas.Remove(meta);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", id);
+
             return NoContent();
         }
 
@@ -137,6 +150,8 @@ namespace GestorFinanceiro.API.Controllers
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoOrigemId);
+
             return Ok(new { mensagem = "Depósito realizado com sucesso." });
         }
 
@@ -177,6 +192,8 @@ namespace GestorFinanceiro.API.Controllers
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoDestinoId);
+
             return Ok(new { mensagem = "Levantamento realizado com sucesso." });
         }
 
@@ -200,6 +217,8 @@ namespace GestorFinanceiro.API.Controllers
 
             _context.MetaMovimentos.Remove(movimento);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", movimento.MetaId);
 
             return NoContent();
         }

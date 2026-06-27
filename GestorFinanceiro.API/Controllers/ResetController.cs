@@ -1,5 +1,7 @@
-﻿using GestorFinanceiro.Data.Context;
+﻿using GestorFinanceiro.API.Hubs;
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,10 +12,12 @@ namespace GestorFinanceiro.API.Controllers
     public class ResetController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public ResetController(ApplicationDbContext context)
+        public ResetController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpPost("apagar-movimentos")]
@@ -49,6 +53,8 @@ namespace GestorFinanceiro.API.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", 0);
+
             var mensagem = request.Tipo switch
             {
                 "receitas" => "Todas as receitas foram apagadas com sucesso.",
@@ -64,6 +70,6 @@ namespace GestorFinanceiro.API.Controllers
     {
         [Required] public int UtilizadorId { get; set; }
         [Required] public string Password { get; set; } = string.Empty;
-        [Required] public string Tipo { get; set; } = "tudo"; // "receitas", "despesas", "tudo"
+        [Required] public string Tipo { get; set; } = "tudo";
     }
 }

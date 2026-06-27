@@ -331,6 +331,8 @@
 
 </div>
 
+@* Substitui o @section Scripts { ... } do DashboardIndex.cshtml por este: *@
+
 @section Scripts {
     @if (Model.TemDadosGraficos)
     {
@@ -338,10 +340,33 @@
         <script>window.dashboardChartData = @Html.Raw(Model.ChartDataJson);</script>
         <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
     }
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     <script>
         function toggleMetaForm(id) {
         var form = document.getElementById(id);
         if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
         }
+
+        // SignalR — atualiza o dashboard automaticamente quando há transferências
+        const connection = new signalR.HubConnectionBuilder()
+        .withUrl("https://localhost:7157/financeHub")
+        .withAutomaticReconnect()
+        .build();
+
+        connection.on("ResumoAtualizado", function () {
+        setTimeout(function () {
+        location.reload();
+        }, 500);
+        });
+
+        connection.start()
+        .then(function () {
+        console.log("SignalR: ligado ao hub com sucesso.");
+        })
+        .catch(function (err) {
+        console.error("SignalR: erro ao ligar ao hub.", err);
+        });
     </script>
 }
+

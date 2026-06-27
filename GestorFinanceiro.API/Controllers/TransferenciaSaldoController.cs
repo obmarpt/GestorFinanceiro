@@ -1,7 +1,9 @@
+using GestorFinanceiro.API.Hubs;
 using GestorFinanceiro.API.Models;
 using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.API.Controllers
@@ -11,10 +13,12 @@ namespace GestorFinanceiro.API.Controllers
     public class TransferenciaSaldoController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public TransferenciaSaldoController(ApplicationDbContext context)
+        public TransferenciaSaldoController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -71,6 +75,10 @@ namespace GestorFinanceiro.API.Controllers
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            // Notificar todos os browsers via SignalR
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoOrigemId);
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", request.SessaoDestinoId);
 
             return Ok(new { mensagem = "Transferência concluída com sucesso." });
         }
