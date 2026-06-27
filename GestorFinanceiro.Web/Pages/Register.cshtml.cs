@@ -36,7 +36,7 @@ namespace GestorFinanceiro.Web.Pages
         public IActionResult OnGet()
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToPage("/Dashboard/Index");
+                return RedirectToPage("/Dashboard");
 
             return Page();
         }

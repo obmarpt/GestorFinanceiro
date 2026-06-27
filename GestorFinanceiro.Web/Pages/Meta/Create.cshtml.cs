@@ -57,7 +57,7 @@ namespace GestorFinanceiro.Web.Pages.Meta
                 }
 
                 TempData["Sucesso"] = "Meta criada com sucesso.";
-                return RedirectToPage("/Dashboard/Index");
+                return RedirectToPage("/Dashboard");
             }
             catch (HttpRequestException ex)
             {
