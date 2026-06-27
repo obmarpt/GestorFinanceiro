@@ -350,7 +350,7 @@
 
         // SignalR — atualiza o dashboard automaticamente quando há transferências
         const connection = new signalR.HubConnectionBuilder()
-        .withUrl("https://localhost:7157/financeHub")
+        .withUrl("http://localhost:5281/financeHub")
         .withAutomaticReconnect()
         .build();
 
