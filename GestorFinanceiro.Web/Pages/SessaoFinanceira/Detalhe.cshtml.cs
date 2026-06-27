@@ -34,7 +34,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
             try
             {
-                var sessaoResponse = await client.GetAsync($"api/SessaoFinanceira/{id}");
+                var sessaoResponse = await client.GetAsync($"api/SessaoFinanceiras/{id}");
                 if (!sessaoResponse.IsSuccessStatusCode)
                 {
                     MensagemErro = "Sessão não encontrada.";

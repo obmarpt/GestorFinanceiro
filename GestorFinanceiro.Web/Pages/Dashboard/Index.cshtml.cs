@@ -139,7 +139,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
             try
             {
-                var sessoesResponse = await client.GetAsync("api/SessaoFinanceira");
+                var sessoesResponse = await client.GetAsync("api/SessaoFinanceiras");
                 if (!sessoesResponse.IsSuccessStatusCode)
                 {
                     MensagemErro = "Não foi possível carregar o dashboard.";

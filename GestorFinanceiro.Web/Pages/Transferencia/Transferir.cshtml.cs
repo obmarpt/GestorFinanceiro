@@ -98,7 +98,7 @@ namespace GestorFinanceiro.Web.Pages.Transferencia
             var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var sessoesResponse = await client.GetAsync("api/SessaoFinanceira");
+                var sessoesResponse = await client.GetAsync("api/SessaoFinanceiras");
                 if (!sessoesResponse.IsSuccessStatusCode)
                 {
                     MensagemErro = "Não foi possível carregar as sessões.";

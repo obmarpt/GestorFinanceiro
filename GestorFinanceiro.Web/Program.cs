@@ -60,7 +60,6 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/", () => Results.Redirect("/Dashboard/Index"));
 app.MapRazorPages();
 
 app.Run();

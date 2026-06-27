@@ -58,7 +58,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             HttpResponseMessage response;
             try
             {
-                response = await client.PostAsJsonAsync("api/SessaoFinanceira", sessao);
+                response = await client.PostAsJsonAsync("api/SessaoFinanceiras", sessao);
             }
             catch (HttpRequestException ex)
             {

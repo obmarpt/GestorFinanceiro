@@ -26,7 +26,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
             try
             {
-                var response = await client.GetAsync("api/SessaoFinanceira");
+                var response = await client.GetAsync("api/SessaoFinanceiras");
                 if (!response.IsSuccessStatusCode)
                 {
                     MensagemErro = "Não foi possível carregar as sessões. Verifique se a API está a correr.";
