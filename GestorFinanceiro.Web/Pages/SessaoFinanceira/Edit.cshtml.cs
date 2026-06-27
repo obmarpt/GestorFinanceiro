@@ -66,7 +66,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             HttpResponseMessage response;
             try
             {
-                response = await client.PutAsJsonAsync($"api/SessaoFinanceira/{id}", sessao);
+                response = await client.PutAsJsonAsync($"api/SessaoFinanceiras/{id}", sessao);
             }
             catch (HttpRequestException ex)
             {
@@ -90,7 +90,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
             try
             {
-                var listResponse = await client.GetAsync("api/SessaoFinanceira");
+                var listResponse = await client.GetAsync("api/SessaoFinanceiras");
                 if (!listResponse.IsSuccessStatusCode)
                 {
                     MensagemErro = "Não foi possível carregar a sessão.";
