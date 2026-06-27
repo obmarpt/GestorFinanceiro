@@ -8,8 +8,12 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
 {
-    var baseUrl = sp.GetRequiredService<IConfiguration>()["ApiBaseUrl"]
-        ?? "http://localhost:5281";
+    var config = sp.GetRequiredService<IConfiguration>();
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var baseUrl = config["ApiBaseUrl"]
+        ?? (env.IsDevelopment()
+            ? "http://localhost:5281"
+            : "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net");
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
 })
 .ConfigurePrimaryHttpMessageHandler(sp =>
