@@ -29,7 +29,7 @@ namespace GestorFinanceiro.Web.Pages
         public IActionResult OnGet()
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToPage("/Dashboard");
+                return RedirectToPage("/Dashboard/Index");
 
             return Page();
         }
@@ -75,7 +75,7 @@ namespace GestorFinanceiro.Web.Pages
             if (utilizador.Role == "Admin")
                 return RedirectToPage("/Admin/Utilizadores");
 
-            return RedirectToPage("/Dashboard");
+            return RedirectToPage("/Dashboard/Index");
         }
     }
 }

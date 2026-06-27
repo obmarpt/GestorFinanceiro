@@ -66,7 +66,7 @@ namespace GestorFinanceiro.Web.Pages.Meta
                 TempData["Erro"] = $"Erro de ligação à API: {ex.Message}";
             }
 
-            return RedirectToPage("/Dashboard");
+            return RedirectToPage("/Dashboard/Index");
         }
     }
 }

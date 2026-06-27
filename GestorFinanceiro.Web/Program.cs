@@ -4,10 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages(options =>
-{
-    options.Conventions.AddPageRoute("/Dashboard/Index", "/Dashboard");
-});
+builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
 {
@@ -63,7 +60,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGet("/", () => Results.Redirect("/Dashboard"));
+app.MapGet("/", () => Results.Redirect("/Dashboard/Index"));
 app.MapRazorPages();
 
 app.Run();
