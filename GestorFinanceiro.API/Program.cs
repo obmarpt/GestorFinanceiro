@@ -13,6 +13,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddSignalR();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
 var app = builder.Build();
 
 var port = Environment.GetEnvironmentVariable("PORT");
@@ -21,6 +27,8 @@ if (!string.IsNullOrEmpty(port))
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseCors();
 
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
