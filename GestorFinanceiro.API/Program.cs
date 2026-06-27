@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Controllers
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -11,81 +12,62 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-<<<<<<< HEAD
-// Swagger
+// ✅ Swagger (substitui AddOpenApi para ser mais estável)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DbContext
+// DbContext (protegido para não crashar no Azure)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (!string.IsNullOrEmpty(connectionString))
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString));
+        options.UseSqlServer(connectionString)
+               .ConfigureWarnings(w => w.Ignore(
+                   Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 }
 else
 {
-    Console.WriteLine("⚠️ Connection string não encontrada!");
+    Console.WriteLine("⚠️ Connection string não encontrada");
 }
-=======
-builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"))
-           .ConfigureWarnings(w => w.Ignore(
-               Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
->>>>>>> master
-
+// SignalR
 builder.Services.AddSignalR();
 
-<<<<<<< HEAD
-// Auth
-=======
-// CORS para permitir ligações SignalR da app Web
+// ✅ CORS (mantive o teu + preparado para produção)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("SignalRPolicy", policy =>
     {
         policy.WithOrigins(
                 "https://localhost:7100",
-                "http://localhost:5243")
+                "http://localhost:5243",
+                "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net") // 👈 adiciona o teu domínio Azure depois
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     });
 });
 
->>>>>>> master
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-<<<<<<< HEAD
-// ✅ PORTA (OBRIGATÓRIO)
+// ✅ 🔥 OBRIGATÓRIO PARA AZURE
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
 
-// Swagger sempre disponível (opcional)
+// ✅ Swagger disponível sempre
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ⚠️ PODES comentar se der problemas
-// app.UseHttpsRedirection();
-
-=======
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-// CORS tem de vir antes do UseHttpsRedirection
+// ✅ Ordem correta
 app.UseCors("SignalRPolicy");
 
-app.UseHttpsRedirection();
->>>>>>> master
+// ⚠️ Se tiveres problemas podes comentar
+// app.UseHttpsRedirection();
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
