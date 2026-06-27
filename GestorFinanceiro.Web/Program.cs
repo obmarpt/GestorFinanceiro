@@ -54,7 +54,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
 
-// Criar utilizador Admin se não existir
+// Database initialization disabled at startup so the app can start on Azure
+// (LocalDB is not available there). Login/Register still use the database when requested.
+/*
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -73,5 +75,6 @@ using (var scope = app.Services.CreateScope())
         context.SaveChanges();
     }
 }
+*/
 
 app.Run();
