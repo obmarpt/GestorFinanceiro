@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
+// ✅ Controllers (mantém)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -12,45 +12,46 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// ✅ Swagger (substitui AddOpenApi para ser mais estável)
+// ✅ Swagger (mantém)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// DbContext (protegido para não crashar no Azure)
-//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// 🔴 DB (comentado para evitar crash)
+// var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-//if (!string.IsNullOrEmpty(connectionString))
-//{
-  //  builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    //    options.UseSqlServer(connectionString)
-      //         .ConfigureWarnings(w => w.Ignore(
-        //           Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
-//}
-//else
-//{
- //   Console.WriteLine("⚠️ Connection string não encontrada");
-//}
+// if (!string.IsNullOrEmpty(connectionString))
+// {
+//     builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//         options.UseSqlServer(connectionString)
+//                .ConfigureWarnings(w => w.Ignore(
+//                    Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+// }
+// else
+// {
+//     Console.WriteLine("⚠️ Connection string não encontrada");
+// }
 
-// SignalR
-builder.Services.AddSignalR();
+// 🔴 SignalR (pode causar crash)
+// builder.Services.AddSignalR();
 
-// ✅ CORS (mantive o teu + preparado para produção)
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("SignalRPolicy", policy =>
-    {
-        policy.WithOrigins(
-                "https://localhost:7100",
-                "http://localhost:5243",
-                "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net") // 👈 adiciona o teu domínio Azure depois
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
-});
+// 🔴 CORS (depende de SignalR / config externa)
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("SignalRPolicy", policy =>
+//     {
+//         policy.WithOrigins(
+//                 "https://localhost:7100",
+//                 "http://localhost:5243",
+//                 "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net")
+//               .AllowAnyHeader()
+//               .AllowAnyMethod()
+//               .AllowCredentials();
+//     });
+// });
 
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+// 🔴 Auth (sem config pode dar erro)
+// builder.Services.AddAuthentication();
+// builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -58,21 +59,25 @@ var app = builder.Build();
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 app.Urls.Add($"http://*:{port}");
 
-// ✅ Swagger disponível sempre
+// ✅ Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ✅ Ordem correta
-app.UseCors("SignalRPolicy");
+// 🔴 CORS
+// app.UseCors("SignalRPolicy");
 
-// ⚠️ Se tiveres problemas podes comentar
+// 🔴 HTTPS
 // app.UseHttpsRedirection();
 
 app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
+
+// 🔴 Auth
+// app.UseAuthentication();
+// app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<FinanceHub>("/financeHub");
+
+// 🔴 SignalR endpoint
+// app.MapHub<FinanceHub>("/financeHub");
 
 app.Run();
