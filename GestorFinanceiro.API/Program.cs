@@ -32,6 +32,7 @@ app.UseRouting();
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/", () => "API running");
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
 
