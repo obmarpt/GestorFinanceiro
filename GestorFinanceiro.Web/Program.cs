@@ -25,8 +25,7 @@ builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
 });
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -58,28 +57,5 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
-
-// Database initialization disabled at startup so the app can start on Azure
-// (LocalDB is not available there). Login/Register still use the database when requested.
-/*
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
-
-    if (!context.Utilizadores.Any(u => u.Role == "Admin"))
-    {
-        context.Utilizadores.Add(new GestorFinanceiro.Data.Models.Utilizador
-        {
-            Nome = "Administrador",
-            Username = "admin",
-            Email = "admin@gestorfinanceiro.pt",
-            PasswordHash = "admin123",
-            Role = "Admin"
-        });
-        context.SaveChanges();
-    }
-}
-*/
 
 app.Run();

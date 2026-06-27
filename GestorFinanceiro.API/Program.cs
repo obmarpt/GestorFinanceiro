@@ -28,8 +28,10 @@ if (!string.IsNullOrEmpty(port))
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseRouting();
 app.UseCors();
-
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
 
