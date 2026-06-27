@@ -1,10 +1,15 @@
-@page
+@page "/"
 @model GestorFinanceiro.Web.Pages.Dashboard.IndexModel
 @inject IConfiguration Configuration
+@inject IWebHostEnvironment Env
 
 @{
     ViewData["Title"] = "Dashboard";
-    var signalRHubUrl = $"{(Configuration["ApiBaseUrl"] ?? "http://localhost:5281").TrimEnd('/')}/financeHub";
+    var apiBaseUrl = Configuration["ApiBaseUrl"]
+        ?? (Env.IsDevelopment()
+            ? "http://localhost:5281"
+            : "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net");
+    var signalRHubUrl = $"{apiBaseUrl.TrimEnd('/')}/financeHub";
 }
 
 <div class="dashboard-container dashboard-layout">
