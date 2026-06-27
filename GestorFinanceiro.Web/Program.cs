@@ -46,6 +46,9 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
 app.MapRazorPages();

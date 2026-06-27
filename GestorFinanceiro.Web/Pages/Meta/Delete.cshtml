@@ -13,7 +13,7 @@
             <h1 class="page-title">Apagar Conta Poupança</h1>
             <p class="subtitle">Confirma que pretendes eliminar esta conta poupança</p>
         </div>
-        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+        <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
     </div>
 
     <div class="sessions-card form-card">
@@ -55,7 +55,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn-app btn-app-danger">Apagar conta poupança</button>
-                    <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary">Cancelar</a>
+                    <a asp-controller="Dashboard" asp-action="Index" class="btn-app btn-app-secondary">Cancelar</a>
                 </div>
             </form>
         }
