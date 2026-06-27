@@ -1,9 +1,7 @@
 name: Build and deploy WEB to Azure
 
+# Desativado — usa master_gestorfinanceiro.yml
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
 
 jobs:
@@ -33,6 +31,9 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/download-artifact@v4
@@ -49,5 +50,5 @@ jobs:
       - name: Deploy
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'gestorfinanceiro-web'
+          app-name: gestorfinanceiro-web
           package: .
