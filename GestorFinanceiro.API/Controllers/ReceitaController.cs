@@ -1,6 +1,8 @@
+using GestorFinanceiro.API.Hubs;
 using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.API.Controllers
@@ -10,13 +12,14 @@ namespace GestorFinanceiro.API.Controllers
     public class ReceitaController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FinanceHub> _hubContext;
 
-        public ReceitaController(ApplicationDbContext context)
+        public ReceitaController(ApplicationDbContext context, IHubContext<FinanceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
-        // GET: api/Receita
         [HttpGet]
         public IActionResult GetReceitas()
         {
@@ -24,38 +27,30 @@ namespace GestorFinanceiro.API.Controllers
             return Ok(receitas);
         }
 
-        // GET: api/Receita/5
         [HttpGet("{id}")]
         public IActionResult GetReceita(int id)
         {
             var receita = _context.Receitas.FirstOrDefault(r => r.Id == id);
-
             if (receita == null)
                 return NotFound("Receita não encontrada.");
-
             return Ok(receita);
         }
 
-        // POST: api/Receita
         [HttpPost]
         public async Task<IActionResult> CriarReceita([FromBody] Receita receita)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            receita.Data = receita.Data.Date + DateTime.Now.TimeOfDay;
 
-            _context.Receitas.Add(receita);
+            receita.Data = receita.Data.Date + DateTime.Now.TimeOfDay;
             _context.Receitas.Add(receita);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetReceita),
-                new { id = receita.Id },
-                receita
-            );
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", receita.SessaoFinanceiraId);
+
+            return CreatedAtAction(nameof(GetReceita), new { id = receita.Id }, receita);
         }
 
-        // PUT: api/Receita/5
         [HttpPut("{id}")]
         public async Task<IActionResult> EditarReceita(int id, [FromBody] Receita receita)
         {
@@ -63,7 +58,6 @@ namespace GestorFinanceiro.API.Controllers
                 return BadRequest("O ID da receita é inválido.");
 
             var receitaExistente = await _context.Receitas.FindAsync(id);
-
             if (receitaExistente == null)
                 return NotFound("Receita não encontrada.");
 
@@ -73,20 +67,23 @@ namespace GestorFinanceiro.API.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", receitaExistente.SessaoFinanceiraId);
+
             return NoContent();
         }
 
-        // DELETE: api/Receita/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> EliminarReceita(int id)
         {
             var receita = await _context.Receitas.FindAsync(id);
-
             if (receita == null)
                 return NotFound("Receita não encontrada.");
 
+            var sessaoId = receita.SessaoFinanceiraId;
             _context.Receitas.Remove(receita);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.All.SendAsync("ResumoAtualizado", sessaoId);
 
             return NoContent();
         }
