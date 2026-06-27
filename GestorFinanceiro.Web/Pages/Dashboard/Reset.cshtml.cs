@@ -59,7 +59,7 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 };
 
                 TempData["Sucesso"] = mensagem;
-                return RedirectToPage("/Dashboard");
+                return RedirectToPage("/Dashboard/Index");
             }
             catch (HttpRequestException ex)
             {
