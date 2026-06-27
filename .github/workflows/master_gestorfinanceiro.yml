@@ -21,10 +21,10 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Build with dotnet
-        run: dotnet build GestorFinanceiro.API --configuration Release
+        run: dotnet build GestorFinanceiro.Web --configuration Release
 
       - name: Publish API
-        run: dotnet publish GestorFinanceiro.API -c Release -o publish
+        run: dotnet publish GestorFinanceiro.Web -c Release -o publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
