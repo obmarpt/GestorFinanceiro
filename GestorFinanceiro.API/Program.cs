@@ -12,39 +12,47 @@ builder.Services.AddControllers()
             System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
-// OpenAPI / Swagger
-builder.Services.AddOpenApi();
+// Swagger
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"))
-           .ConfigureWarnings(w => w.Ignore(
-               Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (!string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
+else
+{
+    Console.WriteLine("⚠️ Connection string não encontrada!");
+}
 
 // SignalR
 builder.Services.AddSignalR();
 
-// 🔐 Autenticação / Autorização (necessário para [Authorize])
+// Auth
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+// ✅ PORTA (OBRIGATÓRIO)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://*:{port}");
 
-app.UseHttpsRedirection();
+// Swagger sempre disponível (opcional)
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// ✅ ORDEM CORRETA
+// ⚠️ PODES comentar se der problemas
+// app.UseHttpsRedirection();
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Endpoints
 app.MapControllers();
 app.MapHub<FinanceHub>("/financeHub");
 
