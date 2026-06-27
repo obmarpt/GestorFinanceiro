@@ -1,0 +1,157 @@
+﻿@page "/Creditos"
+@{
+    ViewData["Title"] = "Créditos";
+    Layout = "_Layout";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Créditos</h1>
+            <p class="subtitle">Informações sobre o projeto</p>
+        </div>
+        <a asp-page="/Dashboard/Index" class="btn-app btn-app-secondary btn-app-sm">← Dashboard</a>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:1.5rem">
+
+        @* Identificação *@
+        <div class="sessions-card">
+            <h2 class="section-title section-title--sm">Identificação</h2>
+            <div class="historico-list">
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-tipo">Curso</span>
+                        <span class="historico-descricao">Licenciatura em Engenharia Informática</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-tipo">Disciplina</span>
+                        <span class="historico-descricao">Desenvolvimento Web</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-tipo">Ano letivo</span>
+                        <span class="historico-descricao">2025/2026</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-tipo">Instituição</span>
+                        <span class="historico-descricao">Instituto Politécnico de Tomar — ESTT</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Autores *@
+        <div class="sessions-card">
+            <h2 class="section-title section-title--sm">Autores</h2>
+            <div class="historico-list">
+                <div class="historico-item">
+                    <span class="historico-icone" style="background:var(--kpi-sessions-bg); color:var(--primary); border-color:var(--kpi-sessions-border); font-weight:800; font-size:0.85rem">
+                        25026
+                    </span>
+                    <div class="historico-info">
+                        <span class="historico-descricao">Pedro Afonso Redol Cotralha Inácio Coelho</span>
+                        <span class="historico-tipo">aluno25026@ipt.pt</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <span class="historico-icone" style="background:var(--kpi-sessions-bg); color:var(--primary); border-color:var(--kpi-sessions-border); font-weight:800; font-size:0.85rem">
+                        27218
+                    </span>
+                    <div class="historico-info">
+                        <span class="historico-descricao">Duarte Rodrigues Carvalho</span>
+                        <span class="historico-tipo">aluno27218@ipt.pt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Credenciais *@
+        <div class="sessions-card">
+            <h2 class="section-title section-title--sm">Credenciais de Acesso</h2>
+            <div class="historico-list">
+                <div class="historico-item">
+                    <span class="historico-icone" style="background:rgba(var(--primary-rgb),0.15); color:var(--primary); border-color:rgba(var(--primary-rgb),0.3); font-size:0.75rem; font-weight:800">
+                        ADM
+                    </span>
+                    <div class="historico-info">
+                        <span class="historico-descricao">Administrador</span>
+                        <span class="historico-tipo">Username: admin · Password: admin123</span>
+                    </div>
+                    <div class="historico-right">
+                        <span style="font-size:0.75rem; font-weight:700; color:var(--primary); background:rgba(var(--primary-rgb),0.12); padding:0.2rem 0.6rem; border-radius:999px">Admin</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <span class="historico-icone" style="background:rgba(var(--success-rgb),0.15); color:var(--success); border-color:rgba(var(--success-rgb),0.3); font-size:0.75rem; font-weight:800">
+                        USR
+                    </span>
+                    <div class="historico-info">
+                        <span class="historico-descricao">Utilizador comum</span>
+                        <span class="historico-tipo">Registo livre na página de registo</span>
+                    </div>
+                    <div class="historico-right">
+                        <span style="font-size:0.75rem; font-weight:700; color:var(--success); background:rgba(var(--success-rgb),0.12); padding:0.2rem 0.6rem; border-radius:999px">Utilizador</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Bibliotecas *@
+        <div class="sessions-card">
+            <h2 class="section-title section-title--sm">Bibliotecas e Frameworks Utilizadas</h2>
+            <div class="historico-list">
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">ASP.NET Core Razor Pages</span>
+                        <span class="historico-tipo">Interface web server-side · Microsoft · <a href="https://learn.microsoft.com/aspnet/core/razor-pages" target="_blank" style="color:var(--primary)">learn.microsoft.com</a></span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">ASP.NET Core MVC (API)</span>
+                        <span class="historico-tipo">API REST · Microsoft · <a href="https://learn.microsoft.com/aspnet/core/mvc" target="_blank" style="color:var(--primary)">learn.microsoft.com</a></span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">Entity Framework Core</span>
+                        <span class="historico-tipo">ORM para acesso à base de dados · Microsoft · NuGet</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">SignalR</span>
+                        <span class="historico-tipo">Comunicação em tempo real (WebSockets) · Microsoft · <a href="https://learn.microsoft.com/aspnet/signalr" target="_blank" style="color:var(--primary)">learn.microsoft.com</a></span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">Bootstrap 5</span>
+                        <span class="historico-tipo">Framework CSS para layout responsivo · <a href="https://getbootstrap.com" target="_blank" style="color:var(--primary)">getbootstrap.com</a></span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">Chart.js 4</span>
+                        <span class="historico-tipo">Gráficos interativos · <a href="https://www.chartjs.org" target="_blank" style="color:var(--primary)">chartjs.org</a> · cdn.jsdelivr.net</span>
+                    </div>
+                </div>
+                <div class="historico-item">
+                    <div class="historico-info">
+                        <span class="historico-descricao">Microsoft SignalR Client (JS)</span>
+                        <span class="historico-tipo">Cliente JavaScript para SignalR · <a href="https://cdnjs.cloudflare.com" target="_blank" style="color:var(--primary)">cdnjs.cloudflare.com</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
