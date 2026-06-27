@@ -24,13 +24,14 @@ jobs:
         run: dotnet build GestorFinanceiro.API --configuration Release
 
       - name: Publish API
-        run: dotnet publish GestorFinanceiro.API -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish GestorFinanceiro.API -c Release -o publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: publish
+
 
   deploy:
     runs-on: windows-latest
@@ -57,4 +58,4 @@ jobs:
         with:
           app-name: 'GestorFinanceiro'
           slot-name: 'Production'
-          package: ${{env.DOTNET_ROOT}}/myapp
+          package: .
