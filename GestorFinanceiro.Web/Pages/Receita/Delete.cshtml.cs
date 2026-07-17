@@ -1,30 +1,31 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.Web.Pages.Receita
 {
     [Authorize]
     public class DeleteModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        public DeleteModel(ApplicationDbContext context)
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public DeleteModel(IHttpClientFactory httpClientFactory)
-        {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
+
         public int Id { get; set; }
+
         public string Descricao { get; set; } = string.Empty;
+
         public decimal Valor { get; set; }
+
         public DateTime Data { get; set; }
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int sessaoId, int id)
@@ -32,28 +33,32 @@ namespace GestorFinanceiro.Web.Pages.Receita
             SessaoId = sessaoId;
             Id = id;
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
             try
             {
-                var response = await client.GetAsync($"api/Receita/{id}");
-                if (!response.IsSuccessStatusCode)
+                var receita = await _context.Receitas
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+                if (receita == null)
                 {
                     MensagemErro = "Receita não encontrada.";
                     return Page();
                 }
 
-                var receita = await response.Content.ReadFromJsonAsync<Data.Models.Receita>(JsonOptions);
-                if (receita == null || receita.SessaoFinanceiraId != sessaoId)
-                    return RedirectToPage("Index", new { sessaoId });
+                if (receita.SessaoFinanceiraId != sessaoId)
+                {
+                    return RedirectToPage(
+                        "Index",
+                        new { sessaoId });
+                }
 
                 Descricao = receita.Descricao;
                 Valor = receita.Valor;
                 Data = receita.Data;
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Erro ao carregar a receita: {ex.Message}";
             }
 
             return Page();
@@ -64,27 +69,35 @@ namespace GestorFinanceiro.Web.Pages.Receita
             SessaoId = sessaoId;
             Id = id;
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
             try
             {
-                response = await client.DeleteAsync($"api/Receita/{id}");
+                var receita = await _context.Receitas
+                    .FirstOrDefaultAsync(r => r.Id == id);
+
+                if (receita == null)
+                {
+                    MensagemErro = "Receita não encontrada.";
+                    return Page();
+                }
+
+                _context.Receitas.Remove(receita);
+
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível eliminar a receita: {ex.Message}";
+
                 return Page();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível eliminar a receita.";
-                return Page();
-            }
+            TempData["Sucesso"] =
+                "Receita eliminada com sucesso.";
 
-            TempData["Sucesso"] = "Receita eliminada com sucesso.";
-            return RedirectToPage("Index", new { sessaoId });
+            return RedirectToPage(
+                "Index",
+                new { sessaoId });
         }
     }
 }

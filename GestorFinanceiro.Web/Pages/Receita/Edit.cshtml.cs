@@ -1,25 +1,19 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace GestorFinanceiro.Web.Pages.Receita
 {
     [Authorize]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        public EditModel(ApplicationDbContext context)
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public EditModel(IHttpClientFactory httpClientFactory)
-        {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
@@ -33,7 +27,8 @@ namespace GestorFinanceiro.Web.Pages.Receita
 
         [BindProperty]
         [Required(ErrorMessage = "O valor é obrigatório.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor deve ser superior a zero.")]
+        [Range(0.01, double.MaxValue,
+            ErrorMessage = "O valor deve ser superior a zero.")]
         public decimal Valor { get; set; }
 
         [BindProperty]
@@ -46,30 +41,24 @@ namespace GestorFinanceiro.Web.Pages.Receita
         public async Task<IActionResult> OnGetAsync(int sessaoId, int id)
         {
             SessaoId = sessaoId;
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
 
-            try
+            var receita = await _context.Receitas.FindAsync(id);
+
+            if (receita == null)
             {
-                var response = await client.GetAsync($"api/Receita/{id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Receita não encontrada.";
-                    return Page();
-                }
-
-                var receita = await response.Content.ReadFromJsonAsync<Data.Models.Receita>(JsonOptions);
-                if (receita == null || receita.SessaoFinanceiraId != sessaoId)
-                    return RedirectToPage("Index", new { sessaoId });
-
-                Id = receita.Id;
-                Descricao = receita.Descricao;
-                Valor = receita.Valor;
-                Data = receita.Data;
+                MensagemErro = "Receita não encontrada.";
+                return Page();
             }
-            catch (HttpRequestException ex)
+
+            if (receita.SessaoFinanceiraId != sessaoId)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                return RedirectToPage("Index", new { sessaoId });
             }
+
+            Id = receita.Id;
+            Descricao = receita.Descricao;
+            Valor = receita.Valor;
+            Data = receita.Data;
 
             return Page();
         }
@@ -82,35 +71,23 @@ namespace GestorFinanceiro.Web.Pages.Receita
             if (!ModelState.IsValid)
                 return Page();
 
-            var receita = new Data.Models.Receita
-            {
-                Id = id,
-                Descricao = Descricao.Trim(),
-                Valor = Valor,
-                Data = Data,
-                SessaoFinanceiraId = sessaoId
-            };
+            var receita = await _context.Receitas.FindAsync(id);
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
-            try
+            if (receita == null)
             {
-                response = await client.PutAsJsonAsync($"api/Receita/{id}", receita);
-            }
-            catch (HttpRequestException ex)
-            {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = "Receita não encontrada.";
                 return Page();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível atualizar a receita.";
-                return Page();
-            }
+            receita.Descricao = Descricao.Trim();
+            receita.Valor = Valor;
+            receita.Data = Data;
+            receita.SessaoFinanceiraId = sessaoId;
+
+            await _context.SaveChangesAsync();
 
             TempData["Sucesso"] = "Receita atualizada com sucesso.";
+
             return RedirectToPage("Index", new { sessaoId });
         }
     }

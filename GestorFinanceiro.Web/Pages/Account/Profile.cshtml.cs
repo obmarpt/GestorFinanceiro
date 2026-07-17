@@ -1,11 +1,12 @@
-using GestorFinanceiro.Web.Helpers;
-using Microsoft.AspNetCore.Authorization;
+using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.Account
@@ -13,12 +14,12 @@ namespace GestorFinanceiro.Web.Pages.Account
     [Authorize]
     public class ProfileModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _env;
 
-        public ProfileModel(IHttpClientFactory httpClientFactory, IWebHostEnvironment env)
+        public ProfileModel(ApplicationDbContext context, IWebHostEnvironment env)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
             _env = env;
         }
 
@@ -50,42 +51,44 @@ namespace GestorFinanceiro.Web.Pages.Account
         public async Task<IActionResult> OnPostAsync()
         {
             EditMode = true;
+
             if (!ModelState.IsValid)
                 return Page();
 
             var userId = ObterUserId();
+
             if (userId == null)
             {
                 MensagemErro = "Sessão inválida.";
                 return Page();
             }
 
-            var atual = await ObterUtilizadorAsync(userId.Value);
-            if (atual == null)
+            var utilizador = await ObterUtilizadorAsync(userId.Value);
+
+            if (utilizador == null)
                 return Page();
 
-            var utilizador = new Data.Models.Utilizador
-            {
-                Id = userId.Value,
-                Nome = Nome.Trim(),
-                Username = Username.Trim(),
-                Email = Email.Trim(),
-                PasswordHash = atual.PasswordHash,
-                Role = atual.Role,
-                ImagemPerfil = atual.ImagemPerfil
-            };
+            utilizador.Nome = Nome.Trim();
+            utilizador.Username = Username.Trim();
+            utilizador.Email = Email.Trim();
 
             if (!await GuardarUtilizadorAsync(utilizador))
                 return Page();
 
-            await AtualizarClaimsAsync(utilizador.Username, utilizador.Email, utilizador.ImagemPerfil ?? "");
+            await AtualizarClaimsAsync(
+                utilizador.Username,
+                utilizador.Email,
+                utilizador.ImagemPerfil ?? string.Empty);
+
             TempData["Sucesso"] = "Perfil atualizado com sucesso.";
+
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostImagemAsync()
         {
             var userId = ObterUserId();
+
             if (userId == null)
             {
                 MensagemErro = "Sessão inválida.";
@@ -99,13 +102,18 @@ namespace GestorFinanceiro.Web.Pages.Account
             }
 
             var ext = Path.GetExtension(ImagemUpload.FileName).ToLowerInvariant();
+
             if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
             {
-                MensagemErro = "Formato não suportado. Use JPG, PNG ou WEBP.";
+                MensagemErro = "Formato não suportado. Utilize JPG, PNG ou WEBP.";
                 return Page();
             }
 
-            var pasta = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+            var pasta = Path.Combine(
+                _env.WebRootPath,
+                "uploads",
+                "avatars");
+
             Directory.CreateDirectory(pasta);
 
             var nomeFicheiro = $"user_{userId}{ext}";
@@ -117,99 +125,119 @@ namespace GestorFinanceiro.Web.Pages.Account
             }
 
             var url = $"/uploads/avatars/{nomeFicheiro}";
-            var atual = await ObterUtilizadorAsync(userId.Value);
-            if (atual == null)
+
+            var utilizador = await ObterUtilizadorAsync(userId.Value);
+
+            if (utilizador == null)
                 return Page();
 
-            atual.ImagemPerfil = url;
-            if (!await GuardarUtilizadorAsync(atual))
+            utilizador.ImagemPerfil = url;
+
+            if (!await GuardarUtilizadorAsync(utilizador))
                 return Page();
 
-            await AtualizarClaimsAsync(User.Identity!.Name!, User.FindFirstValue(ClaimTypes.Email)!, url);
+            await AtualizarClaimsAsync(
+                User.Identity!.Name!,
+                User.FindFirstValue(ClaimTypes.Email)!,
+                url);
+
             TempData["Sucesso"] = "Imagem de perfil atualizada.";
+
             return RedirectToPage();
         }
 
         private async Task<IActionResult> CarregarPerfilAsync()
         {
             var userId = ObterUserId();
+
             if (userId == null)
             {
                 MensagemErro = "Sessão inválida.";
                 return Page();
             }
 
-            var u = await ObterUtilizadorAsync(userId.Value);
-            if (u == null)
+            var utilizador = await ObterUtilizadorAsync(userId.Value);
+
+            if (utilizador == null)
                 return Page();
 
-            Nome = u.Nome;
-            Username = u.Username;
-            Email = u.Email;
-            Role = u.Role;
-            ImagemPerfil = u.ImagemPerfil;
+            Nome = utilizador.Nome;
+            Username = utilizador.Username;
+            Email = utilizador.Email;
+            Role = utilizador.Role;
+            ImagemPerfil = utilizador.ImagemPerfil;
+
             return Page();
         }
 
         private int? ObterUserId()
         {
             var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(claim, out var id) ? id : null;
+
+            return int.TryParse(claim, out var id)
+                ? id
+                : null;
         }
 
-        private async Task<Data.Models.Utilizador?> ObterUtilizadorAsync(int userId)
+        private async Task<Utilizador?> ObterUtilizadorAsync(int userId)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.GetAsync($"api/Utilizador/{userId}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar o perfil.";
-                    return null;
-                }
-                return await response.Content.ReadFromJsonAsync<Data.Models.Utilizador>(FinanceApiHelper.JsonOptions);
+                return await _context.Utilizadores
+                    .FirstOrDefaultAsync(u => u.Id == userId);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Erro ao carregar o perfil: {ex.Message}";
                 return null;
             }
         }
 
-        private async Task<bool> GuardarUtilizadorAsync(Data.Models.Utilizador utilizador)
+        private async Task<bool> GuardarUtilizadorAsync(Utilizador utilizador)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.PutAsJsonAsync($"api/Utilizador/{utilizador.Id}", utilizador);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var erro = await response.Content.ReadAsStringAsync();
-                    MensagemErro = string.IsNullOrWhiteSpace(erro) ? "Não foi possível guardar." : erro.Trim('"');
-                    return false;
-                }
+                _context.Utilizadores.Update(utilizador);
+
+                await _context.SaveChangesAsync();
+
                 return true;
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Erro ao guardar o perfil: {ex.Message}";
                 return false;
             }
         }
 
-        private async Task AtualizarClaimsAsync(string username, string email, string imagemPerfil = "")
+        private async Task AtualizarClaimsAsync(
+            string username,
+            string email,
+            string imagemPerfil = "")
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var userId =
+                User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+            var role =
+                User.FindFirstValue(ClaimTypes.Role)
+                ?? "Utilizador";
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, userId),
                 new(ClaimTypes.Name, username),
                 new(ClaimTypes.Email, email),
+                new(ClaimTypes.Role, role),
                 new("ImagemPerfil", imagemPerfil)
             };
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity));
         }
     }
 }

@@ -1,30 +1,32 @@
+using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.Web.Pages.Despesa
 {
     [Authorize]
     public class DeleteModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        public DeleteModel(ApplicationDbContext context)
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public DeleteModel(IHttpClientFactory httpClientFactory)
-        {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
+
         public int Id { get; set; }
+
         public string Descricao { get; set; } = string.Empty;
+
         public decimal Valor { get; set; }
+
         public DateTime Data { get; set; }
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int sessaoId, int id)
@@ -32,28 +34,32 @@ namespace GestorFinanceiro.Web.Pages.Despesa
             SessaoId = sessaoId;
             Id = id;
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
             try
             {
-                var response = await client.GetAsync($"api/Despesa/{id}");
-                if (!response.IsSuccessStatusCode)
+                var despesa = await _context.Despesas
+                    .FirstOrDefaultAsync(d => d.Id == id);
+
+                if (despesa == null)
                 {
                     MensagemErro = "Despesa não encontrada.";
                     return Page();
                 }
 
-                var despesa = await response.Content.ReadFromJsonAsync<Data.Models.Despesa>(JsonOptions);
-                if (despesa == null || despesa.SessaoFinanceiraId != sessaoId)
-                    return RedirectToPage("Index", new { sessaoId });
+                if (despesa.SessaoFinanceiraId != sessaoId)
+                {
+                    return RedirectToPage(
+                        "Index",
+                        new { sessaoId });
+                }
 
                 Descricao = despesa.Descricao;
                 Valor = despesa.Valor;
                 Data = despesa.Data;
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Erro ao carregar a despesa: {ex.Message}";
             }
 
             return Page();
@@ -64,27 +70,35 @@ namespace GestorFinanceiro.Web.Pages.Despesa
             SessaoId = sessaoId;
             Id = id;
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
             try
             {
-                response = await client.DeleteAsync($"api/Despesa/{id}");
+                var despesa = await _context.Despesas
+                    .FirstOrDefaultAsync(d => d.Id == id);
+
+                if (despesa == null)
+                {
+                    MensagemErro = "Despesa não encontrada.";
+                    return Page();
+                }
+
+                _context.Despesas.Remove(despesa);
+
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível eliminar a despesa: {ex.Message}";
+
                 return Page();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível eliminar a despesa.";
-                return Page();
-            }
+            TempData["Sucesso"] =
+                "Despesa eliminada com sucesso.";
 
-            TempData["Sucesso"] = "Despesa eliminada com sucesso.";
-            return RedirectToPage("Index", new { sessaoId });
+            return RedirectToPage(
+                "Index",
+                new { sessaoId });
         }
     }
 }

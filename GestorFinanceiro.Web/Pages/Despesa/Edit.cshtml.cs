@@ -1,25 +1,21 @@
+using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace GestorFinanceiro.Web.Pages.Despesa
 {
     [Authorize]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        public EditModel(ApplicationDbContext context)
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public EditModel(IHttpClientFactory httpClientFactory)
-        {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
@@ -33,7 +29,8 @@ namespace GestorFinanceiro.Web.Pages.Despesa
 
         [BindProperty]
         [Required(ErrorMessage = "O valor é obrigatório.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor deve ser superior a zero.")]
+        [Range(0.01, double.MaxValue,
+            ErrorMessage = "O valor deve ser superior a zero.")]
         public decimal Valor { get; set; }
 
         [BindProperty]
@@ -46,29 +43,34 @@ namespace GestorFinanceiro.Web.Pages.Despesa
         public async Task<IActionResult> OnGetAsync(int sessaoId, int id)
         {
             SessaoId = sessaoId;
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
 
             try
             {
-                var response = await client.GetAsync($"api/Despesa/{id}");
-                if (!response.IsSuccessStatusCode)
+                var despesa = await _context.Despesas
+                    .FirstOrDefaultAsync(d => d.Id == id);
+
+                if (despesa == null)
                 {
                     MensagemErro = "Despesa não encontrada.";
                     return Page();
                 }
 
-                var despesa = await response.Content.ReadFromJsonAsync<Data.Models.Despesa>(JsonOptions);
-                if (despesa == null || despesa.SessaoFinanceiraId != sessaoId)
-                    return RedirectToPage("Index", new { sessaoId });
+                if (despesa.SessaoFinanceiraId != sessaoId)
+                {
+                    return RedirectToPage(
+                        "Index",
+                        new { sessaoId });
+                }
 
                 Id = despesa.Id;
                 Descricao = despesa.Descricao;
                 Valor = despesa.Valor;
                 Data = despesa.Data;
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Erro ao carregar a despesa: {ex.Message}";
             }
 
             return Page();
@@ -82,36 +84,40 @@ namespace GestorFinanceiro.Web.Pages.Despesa
             if (!ModelState.IsValid)
                 return Page();
 
-            var despesa = new Data.Models.Despesa
-            {
-                Id = id,
-                Descricao = Descricao.Trim(),
-                Valor = Valor,
-                Data = Data,
-                SessaoFinanceiraId = sessaoId
-            };
-
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
             try
             {
-                response = await client.PutAsJsonAsync($"api/Despesa/{id}", despesa);
+                var despesa = await _context.Despesas
+                    .FirstOrDefaultAsync(d => d.Id == id);
+
+                if (despesa == null)
+                {
+                    MensagemErro = "Despesa não encontrada.";
+                    return Page();
+                }
+
+                despesa.Descricao = Descricao.Trim();
+                despesa.Valor = Valor;
+                despesa.Data = Data;
+                despesa.SessaoFinanceiraId = sessaoId;
+
+                _context.Despesas.Update(despesa);
+
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível atualizar a despesa: {ex.Message}";
+
                 return Page();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível atualizar a despesa.";
-                return Page();
-            }
+            TempData["Sucesso"] =
+                "Despesa atualizada com sucesso.";
 
-            TempData["Sucesso"] = "Despesa atualizada com sucesso.";
-            return RedirectToPage("Index", new { sessaoId });
+            return RedirectToPage(
+                "Index",
+                new { sessaoId });
         }
     }
 }

@@ -1,64 +1,55 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http.Json;
-using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.Web.Pages.Despesa
 {
     [Authorize]
     public class IndexModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
+        public IndexModel(ApplicationDbContext context)
         {
-            PropertyNameCaseInsensitive = true
-        };
-
-        public IndexModel(IHttpClientFactory httpClientFactory)
-        {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
+
         public string SessaoNome { get; set; } = string.Empty;
+
         public IList<Data.Models.Despesa> Despesas { get; set; } = [];
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int sessaoId)
         {
             SessaoId = sessaoId;
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
 
             try
             {
-                var sessaoResponse = await client.GetAsync($"api/SessaoFinanceiras/{sessaoId}");
-                if (!sessaoResponse.IsSuccessStatusCode)
+                var sessao = await _context.SessoesFinanceiras
+                    .FirstOrDefaultAsync(s => s.Id == sessaoId);
+
+                if (sessao == null)
                 {
                     MensagemErro = "Sessão financeira não encontrada.";
                     return Page();
                 }
 
-                var sessao = await sessaoResponse.Content.ReadFromJsonAsync<Data.Models.SessaoFinanceira>(JsonOptions);
-                SessaoNome = sessao?.Nome ?? "Sessão";
+                SessaoNome = sessao.Nome;
 
-                var response = await client.GetAsync("api/Despesa");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar as despesas. Verifique se a API está a correr.";
-                    return Page();
-                }
-
-                var todas = await response.Content.ReadFromJsonAsync<List<Data.Models.Despesa>>(JsonOptions) ?? [];
-                Despesas = todas
+                Despesas = await _context.Despesas
                     .Where(d => d.SessaoFinanceiraId == sessaoId)
                     .OrderByDescending(d => d.Data)
-                    .ToList();
+                    .ToListAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível carregar as despesas: {ex.Message}";
             }
 
             return Page();

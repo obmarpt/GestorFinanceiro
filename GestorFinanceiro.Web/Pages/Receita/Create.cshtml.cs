@@ -1,19 +1,19 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 
 namespace GestorFinanceiro.Web.Pages.Receita
 {
     [Authorize]
     public class CreateModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public CreateModel(IHttpClientFactory httpClientFactory)
+        public CreateModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public int SessaoId { get; set; }
@@ -24,7 +24,8 @@ namespace GestorFinanceiro.Web.Pages.Receita
 
         [BindProperty]
         [Required(ErrorMessage = "O valor é obrigatório.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor deve ser superior a zero.")]
+        [Range(0.01, double.MaxValue,
+            ErrorMessage = "O valor deve ser superior a zero.")]
         public decimal Valor { get; set; }
 
         [BindProperty]
@@ -55,27 +56,26 @@ namespace GestorFinanceiro.Web.Pages.Receita
                 SessaoFinanceiraId = sessaoId
             };
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
             try
             {
-                response = await client.PostAsJsonAsync("api/Receita", receita);
+                _context.Receitas.Add(receita);
+
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível criar a receita: {ex.Message}";
+
                 return Page();
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível criar a receita.";
-                return Page();
-            }
+            TempData["Sucesso"] =
+                "Receita criada com sucesso.";
 
-            TempData["Sucesso"] = "Receita criada com sucesso.";
-            return RedirectToPage("Index", new { sessaoId });
+            return RedirectToPage(
+                "Index",
+                new { sessaoId });
         }
     }
 }

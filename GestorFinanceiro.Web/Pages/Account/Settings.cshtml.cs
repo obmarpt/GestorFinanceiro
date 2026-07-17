@@ -1,11 +1,12 @@
-using GestorFinanceiro.Web.Helpers;
+using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.Account
@@ -13,11 +14,11 @@ namespace GestorFinanceiro.Web.Pages.Account
     [Authorize]
     public class SettingsModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public SettingsModel(IHttpClientFactory httpClientFactory)
+        public SettingsModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         [BindProperty]
@@ -43,12 +44,16 @@ namespace GestorFinanceiro.Web.Pages.Account
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var u = await ObterUtilizadorAsync();
-            if (u == null) return Page();
-            Nome = u.Nome;
-            Username = u.Username;
-            Email = u.Email;
-            ImagemPerfil = u.ImagemPerfil;
+            var utilizador = await ObterUtilizadorAsync();
+
+            if (utilizador == null)
+                return Page();
+
+            Nome = utilizador.Nome;
+            Username = utilizador.Username;
+            Email = utilizador.Email;
+            ImagemPerfil = utilizador.ImagemPerfil;
+
             return Page();
         }
 
@@ -57,100 +62,122 @@ namespace GestorFinanceiro.Web.Pages.Account
             if (!ModelState.IsValid)
                 return Page();
 
-            if (!string.IsNullOrWhiteSpace(NovaPassword) && NovaPassword != ConfirmarPassword)
+            if (!string.IsNullOrWhiteSpace(NovaPassword)
+                && NovaPassword != ConfirmarPassword)
             {
                 MensagemErro = "As passwords não coincidem.";
                 return Page();
             }
 
             var userId = ObterUserId();
+
             if (userId == null)
             {
                 MensagemErro = "Sessão inválida.";
                 return Page();
             }
 
-            var atual = await ObterUtilizadorAsync();
-            if (atual == null)
+            var utilizador = await ObterUtilizadorAsync();
+
+            if (utilizador == null)
                 return Page();
 
-            var utilizador = new Data.Models.Utilizador
-            {
-                Id = userId.Value,
-                Nome = Nome.Trim(),
-                Username = Username.Trim(),
-                Email = Email.Trim(),
-                PasswordHash = string.IsNullOrWhiteSpace(NovaPassword) ? atual.PasswordHash : NovaPassword,
-                Role = atual.Role,
-                ImagemPerfil = atual.ImagemPerfil
-            };
+            utilizador.Nome = Nome.Trim();
+            utilizador.Username = Username.Trim();
+            utilizador.Email = Email.Trim();
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            if (!string.IsNullOrWhiteSpace(NovaPassword))
+            {
+                utilizador.PasswordHash = NovaPassword;
+            }
+
             try
             {
-                var response = await client.PutAsJsonAsync($"api/Utilizador/{userId}", utilizador);
-                if (!response.IsSuccessStatusCode)
-                {
-                    var erro = await response.Content.ReadAsStringAsync();
-                    MensagemErro = string.IsNullOrWhiteSpace(erro) ? "Não foi possível guardar." : erro.Trim('"');
-                    return Page();
-                }
+                _context.Utilizadores.Update(utilizador);
+
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Erro ao guardar as alterações: {ex.Message}";
                 return Page();
             }
 
-            await AtualizarClaimsAsync(utilizador.Username, utilizador.Email);
+            await AtualizarClaimsAsync(
+                utilizador.Username,
+                utilizador.Email);
+
             TempData["Sucesso"] = "Alterações guardadas com sucesso.";
+
             return RedirectToPage();
         }
 
         private int? ObterUserId()
         {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(claim, out var id) ? id : null;
+            var claim = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            return int.TryParse(claim, out var id)
+                ? id
+                : null;
         }
 
-        private async Task<Data.Models.Utilizador?> ObterUtilizadorAsync()
+        private async Task<Utilizador?> ObterUtilizadorAsync()
         {
             var userId = ObterUserId();
+
             if (userId == null)
             {
                 MensagemErro = "Sessão inválida.";
                 return null;
             }
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.GetAsync($"api/Utilizador/{userId}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar os dados.";
-                    return null;
-                }
-                return await response.Content.ReadFromJsonAsync<Data.Models.Utilizador>(FinanceApiHelper.JsonOptions);
+                return await _context.Utilizadores
+                    .FirstOrDefaultAsync(
+                        u => u.Id == userId.Value);
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Erro ao carregar os dados: {ex.Message}";
                 return null;
             }
         }
 
-        private async Task AtualizarClaimsAsync(string username, string email)
+        private async Task AtualizarClaimsAsync(
+            string username,
+            string email)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var userId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier)!;
+
+            var role =
+                User.FindFirstValue(
+                    ClaimTypes.Role)
+                ?? "Utilizador";
+
+            var imagemPerfil =
+                User.FindFirstValue("ImagemPerfil")
+                ?? string.Empty;
+
             var claims = new List<Claim>
             {
                 new(ClaimTypes.NameIdentifier, userId),
                 new(ClaimTypes.Name, username),
-                new(ClaimTypes.Email, email)
+                new(ClaimTypes.Email, email),
+                new(ClaimTypes.Role, role),
+                new("ImagemPerfil", imagemPerfil)
             };
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+            var identity = new ClaimsIdentity(
+                claims,
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity));
         }
     }
 }

@@ -1,69 +1,81 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestorFinanceiro.Web.Pages.Meta
 {
     [Authorize]
     public class DeleteModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public DeleteModel(IHttpClientFactory httpClientFactory)
+        public DeleteModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         [BindProperty(SupportsGet = true)]
         public int Id { get; set; }
 
         public string? NomeMeta { get; set; }
+
         public decimal ValorAtual { get; set; }
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.GetAsync($"api/Meta/{Id}");
-                if (!response.IsSuccessStatusCode)
+                var meta = await _context.Metas
+                    .FirstOrDefaultAsync(m => m.Id == Id);
+
+                if (meta == null)
                 {
                     MensagemErro = "Meta não encontrada.";
                     return Page();
                 }
 
-                var meta = await response.Content.ReadFromJsonAsync<GestorFinanceiro.Data.Models.Meta>();
-                NomeMeta = meta?.Nome;
-                ValorAtual = meta?.ValorAtual ?? 0;
+                NomeMeta = meta.Nome;
+                ValorAtual = meta.ValorAtual;
+
                 return Page();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível carregar a meta: {ex.Message}";
+
                 return Page();
             }
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.DeleteAsync($"api/Meta/{Id}");
-                if (!response.IsSuccessStatusCode)
+                var meta = await _context.Metas
+                    .FirstOrDefaultAsync(m => m.Id == Id);
+
+                if (meta == null)
                 {
-                    TempData["Erro"] = "Não foi possível apagar a meta.";
+                    TempData["Erro"] = "Meta não encontrada.";
+                    return RedirectToPage("/Dashboard/Index");
                 }
-                else
-                {
-                    TempData["Sucesso"] = "Meta apagada com sucesso.";
-                }
+
+                _context.Metas.Remove(meta);
+
+                await _context.SaveChangesAsync();
+
+                TempData["Sucesso"] =
+                    "Meta apagada com sucesso.";
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                TempData["Erro"] = $"Erro de ligação à API: {ex.Message}";
+                TempData["Erro"] =
+                    $"Não foi possível apagar a meta: {ex.Message}";
             }
 
             return RedirectToPage("/Dashboard/Index");

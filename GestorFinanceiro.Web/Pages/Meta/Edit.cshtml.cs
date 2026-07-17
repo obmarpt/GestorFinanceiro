@@ -1,8 +1,9 @@
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.Meta
@@ -10,11 +11,11 @@ namespace GestorFinanceiro.Web.Pages.Meta
     [Authorize]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public EditModel(IHttpClientFactory httpClientFactory)
+        public EditModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -29,7 +30,8 @@ namespace GestorFinanceiro.Web.Pages.Meta
 
         [BindProperty]
         [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor alvo deve ser maior que zero.")]
+        [Range(0.01, double.MaxValue,
+            ErrorMessage = "O valor alvo deve ser maior que zero.")]
         public decimal ValorAlvo { get; set; }
 
         [BindProperty]
@@ -40,17 +42,11 @@ namespace GestorFinanceiro.Web.Pages.Meta
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var response = await client.GetAsync($"api/Meta/{Id}");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Poupança não encontrada.";
-                    return Page();
-                }
+                var meta = await _context.Metas
+                    .FirstOrDefaultAsync(m => m.Id == Id);
 
-                var meta = await response.Content.ReadFromJsonAsync<GestorFinanceiro.Data.Models.Meta>();
                 if (meta == null)
                 {
                     MensagemErro = "Poupança não encontrada.";
@@ -61,11 +57,14 @@ namespace GestorFinanceiro.Web.Pages.Meta
                 Descricao = meta.Descricao;
                 ValorAlvo = meta.ValorAlvo;
                 ValorAtual = meta.ValorAtual;
+
                 return Page();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível carregar a poupança: {ex.Message}";
+
                 return Page();
             }
         }
@@ -75,26 +74,40 @@ namespace GestorFinanceiro.Web.Pages.Meta
             if (!ModelState.IsValid)
                 return Page();
 
-            var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-            var payload = new { Nome, Descricao, ValorAlvo, ValorAtual, UtilizadorId = utilizadorId };
+            var utilizadorId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             try
             {
-                var response = await client.PutAsJsonAsync($"api/Meta/{Id}", payload);
-                if (!response.IsSuccessStatusCode)
+                var meta = await _context.Metas
+                    .FirstOrDefaultAsync(m => m.Id == Id);
+
+                if (meta == null)
                 {
-                    MensagemErro = "Não foi possível guardar as alterações.";
+                    MensagemErro = "Poupança não encontrada.";
                     return Page();
                 }
 
-                TempData["Sucesso"] = "Conta Poupança atualizada com sucesso.";
+                meta.Nome = Nome.Trim();
+                meta.Descricao = Descricao?.Trim();
+                meta.ValorAlvo = ValorAlvo;
+                meta.ValorAtual = ValorAtual;
+                meta.UtilizadorId = utilizadorId;
+
+                _context.Metas.Update(meta);
+
+                await _context.SaveChangesAsync();
+
+                TempData["Sucesso"] =
+                    "Conta Poupança atualizada com sucesso.";
+
                 return RedirectToPage("/Dashboard/Index");
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível guardar as alterações: {ex.Message}";
+
                 return Page();
             }
         }

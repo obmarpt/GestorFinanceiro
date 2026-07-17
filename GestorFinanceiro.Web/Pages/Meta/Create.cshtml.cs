@@ -1,8 +1,9 @@
+using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
 using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.Meta
@@ -10,11 +11,11 @@ namespace GestorFinanceiro.Web.Pages.Meta
     [Authorize]
     public class CreateModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public CreateModel(IHttpClientFactory httpClientFactory)
+        public CreateModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         [BindProperty]
@@ -26,7 +27,8 @@ namespace GestorFinanceiro.Web.Pages.Meta
 
         [BindProperty]
         [Required]
-        [Range(0.01, double.MaxValue, ErrorMessage = "O valor alvo deve ser maior que zero.")]
+        [Range(0.01, double.MaxValue,
+            ErrorMessage = "O valor alvo deve ser maior que zero.")]
         public decimal ValorAlvo { get; set; }
 
         [BindProperty]
@@ -35,33 +37,43 @@ namespace GestorFinanceiro.Web.Pages.Meta
 
         public string? MensagemErro { get; set; }
 
-        public void OnGet() { }
+        public void OnGet()
+        {
+        }
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
                 return Page();
 
-            var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var utilizadorId = int.Parse(
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-            var payload = new { Nome, Descricao, ValorAlvo, ValorAtual, UtilizadorId = utilizadorId };
+            var meta = new Data.Models.Meta
+            {
+                Nome = Nome.Trim(),
+                Descricao = Descricao?.Trim(),
+                ValorAlvo = ValorAlvo,
+                ValorAtual = ValorAtual,
+                UtilizadorId = utilizadorId
+            };
 
             try
             {
-                var response = await client.PostAsJsonAsync("api/Meta", payload);
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível criar a meta.";
-                    return Page();
-                }
+                _context.Metas.Add(meta);
 
-                TempData["Sucesso"] = "Meta criada com sucesso.";
+                await _context.SaveChangesAsync();
+
+                TempData["Sucesso"] =
+                    "Meta criada com sucesso.";
+
                 return RedirectToPage("/Dashboard/Index");
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro =
+                    $"Não foi possível criar a meta: {ex.Message}";
+
                 return Page();
             }
         }
