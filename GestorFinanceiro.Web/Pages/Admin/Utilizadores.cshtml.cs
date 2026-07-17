@@ -41,6 +41,8 @@ namespace GestorFinanceiro.Web.Pages.Admin
             {
                 MensagemErro = $"Erro ao carregar os utilizadores: {ex.Message}";
             }
+
+            return Page();
         }
 
         public async Task<IActionResult> OnPostTornarAdminAsync(int id)

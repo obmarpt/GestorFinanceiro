@@ -1,9 +1,9 @@
-using GestorFinanceiro.Web.Helpers;
+using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -12,11 +12,11 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
     [Authorize]
     public class IndexModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IHttpClientFactory httpClientFactory)
+        public IndexModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public string Username { get; set; } = string.Empty;
@@ -43,91 +43,275 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
         public async Task<IActionResult> OnPostDepositarAsync(int metaId, int sessaoOrigemId, decimal valor)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var payload = new { SessaoOrigemId = sessaoOrigemId, Valor = valor };
-                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/depositar", payload);
-                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Depósito realizado com sucesso."
-                    : (await response.Content.ReadAsStringAsync()).Trim('"');
+                var meta = await _context.Metas.FindAsync(metaId);
+                if (meta == null)
+                {
+                    TempData["Erro"] = "Poupança não encontrada.";
+                    return RedirectToPage();
+                }
+
+                var sessao = await _context.SessoesFinanceiras.FindAsync(sessaoOrigemId);
+                if (sessao == null)
+                {
+                    TempData["Erro"] = "Sessão não encontrada.";
+                    return RedirectToPage();
+                }
+
+                var totalReceitas = await _context.Receitas
+                    .Where(r => r.SessaoFinanceiraId == sessaoOrigemId)
+                    .SumAsync(r => r.Valor);
+
+                var totalDespesas = await _context.Despesas
+                    .Where(d => d.SessaoFinanceiraId == sessaoOrigemId)
+                    .SumAsync(d => d.Valor);
+
+                var saldoSessao = totalReceitas - totalDespesas;
+
+                if (valor > saldoSessao)
+                {
+                    TempData["Erro"] = $"Saldo insuficiente na sessão. Disponível: {saldoSessao:N2} €.";
+                    return RedirectToPage();
+                }
+
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                _context.Despesas.Add(new Data.Models.Despesa
+                {
+                    Descricao = $"Depósito para poupança: {meta.Nome}",
+                    Valor = valor,
+                    Data = DateTime.Now,
+                    SessaoFinanceiraId = sessaoOrigemId
+                });
+
+                meta.ValorAtual += valor;
+
+                _context.MetaMovimentos.Add(new Data.Models.MetaMovimento
+                {
+                    MetaId = metaId,
+                    Tipo = "Deposito",
+                    Valor = valor,
+                    Data = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Sucesso"] = "Depósito realizado com sucesso.";
             }
-            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = ex.Message;
+            }
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostLevantarAsync(int metaId, int sessaoDestinoId, decimal valor)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                var payload = new { SessaoDestinoId = sessaoDestinoId, Valor = valor };
-                var response = await client.PostAsJsonAsync($"api/Meta/{metaId}/levantar", payload);
-                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Levantamento realizado com sucesso."
-                    : (await response.Content.ReadAsStringAsync()).Trim('"');
+                var meta = await _context.Metas.FindAsync(metaId);
+                if (meta == null)
+                {
+                    TempData["Erro"] = "Poupança não encontrada.";
+                    return RedirectToPage();
+                }
+
+                if (valor > meta.ValorAtual)
+                {
+                    TempData["Erro"] = $"Valor superior ao disponível na poupança ({meta.ValorAtual:N2} €).";
+                    return RedirectToPage();
+                }
+
+                var sessao = await _context.SessoesFinanceiras.FindAsync(sessaoDestinoId);
+                if (sessao == null)
+                {
+                    TempData["Erro"] = "Sessão não encontrada.";
+                    return RedirectToPage();
+                }
+
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+
+                _context.Receitas.Add(new Data.Models.Receita
+                {
+                    Descricao = $"Levantamento de poupança: {meta.Nome}",
+                    Valor = valor,
+                    Data = DateTime.Now,
+                    SessaoFinanceiraId = sessaoDestinoId
+                });
+
+                meta.ValorAtual -= valor;
+
+                _context.MetaMovimentos.Add(new Data.Models.MetaMovimento
+                {
+                    MetaId = metaId,
+                    Tipo = "Levantamento",
+                    Valor = valor,
+                    Data = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                TempData["Sucesso"] = "Levantamento realizado com sucesso.";
             }
-            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = ex.Message;
+            }
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostTransferirBolsaSessaoAsync(int sessaoDestinoId, decimal valor)
         {
             var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+
             try
             {
-                var payload = new { UtilizadorId = utilizadorId, SessaoDestinoId = sessaoDestinoId, Valor = valor };
-                var response = await client.PostAsJsonAsync("api/Bolsa/transferir-sessao", payload);
-                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Transferência da bolsa realizada com sucesso."
-                    : (await response.Content.ReadAsStringAsync()).Trim('"');
+                var bolsa = await _context.Bolsas
+                    .FirstOrDefaultAsync(b => b.UtilizadorId == utilizadorId);
+
+                if (bolsa == null || bolsa.Saldo < valor)
+                {
+                    TempData["Erro"] = $"Saldo insuficiente na bolsa. Disponível: {bolsa?.Saldo ?? 0:N2} €.";
+                    return RedirectToPage();
+                }
+
+                var sessao = await _context.SessoesFinanceiras.FindAsync(sessaoDestinoId);
+                if (sessao == null)
+                {
+                    TempData["Erro"] = "Sessão não encontrada.";
+                    return RedirectToPage();
+                }
+
+                bolsa.Saldo -= valor;
+                bolsa.DataAtualizacao = DateTime.Now;
+
+                _context.Receitas.Add(new Data.Models.Receita
+                {
+                    Descricao = "Transferência da bolsa",
+                    Valor = valor,
+                    Data = DateTime.Now,
+                    SessaoFinanceiraId = sessaoDestinoId
+                });
+
+                await _context.SaveChangesAsync();
+
+                TempData["Sucesso"] = "Transferência da bolsa realizada com sucesso.";
             }
-            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = ex.Message;
+            }
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostTransferirBolsaMetaAsync(int metaDestinoId, decimal valor)
         {
             var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+
             try
             {
-                var payload = new { UtilizadorId = utilizadorId, MetaDestinoId = metaDestinoId, Valor = valor };
-                var response = await client.PostAsJsonAsync("api/Bolsa/transferir-meta", payload);
-                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Transferência para poupança realizada com sucesso."
-                    : (await response.Content.ReadAsStringAsync()).Trim('"');
+                var bolsa = await _context.Bolsas
+                    .FirstOrDefaultAsync(b => b.UtilizadorId == utilizadorId);
+
+                if (bolsa == null || bolsa.Saldo < valor)
+                {
+                    TempData["Erro"] = $"Saldo insuficiente na bolsa. Disponível: {bolsa?.Saldo ?? 0:N2} €.";
+                    return RedirectToPage();
+                }
+
+                var meta = await _context.Metas.FindAsync(metaDestinoId);
+                if (meta == null)
+                {
+                    TempData["Erro"] = "Meta não encontrada.";
+                    return RedirectToPage();
+                }
+
+                bolsa.Saldo -= valor;
+                bolsa.DataAtualizacao = DateTime.Now;
+                meta.ValorAtual += valor;
+
+                _context.MetaMovimentos.Add(new Data.Models.MetaMovimento
+                {
+                    MetaId = metaDestinoId,
+                    Tipo = "Deposito",
+                    Valor = valor,
+                    Data = DateTime.Now
+                });
+
+                await _context.SaveChangesAsync();
+
+                TempData["Sucesso"] = "Transferência para poupança realizada com sucesso.";
             }
-            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = ex.Message;
+            }
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostApagarHistoricoAsync(int registoId, string tipoRegisto)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
             try
             {
-                string url = tipoRegisto switch
+                switch (tipoRegisto)
                 {
-                    "receita" => $"api/Receita/{registoId}",
-                    "despesa" => $"api/Despesa/{registoId}",
-                    "metamovimento" => $"api/Meta/movimentos/{registoId}",
-                    _ => ""
-                };
+                    case "receita":
+                        var receita = await _context.Receitas.FindAsync(registoId);
+                        if (receita == null)
+                        {
+                            TempData["Erro"] = "Registo não encontrado.";
+                            return RedirectToPage();
+                        }
+                        _context.Receitas.Remove(receita);
+                        break;
 
-                if (string.IsNullOrEmpty(url))
-                {
-                    TempData["Erro"] = "Tipo de registo desconhecido.";
-                    return RedirectToPage();
+                    case "despesa":
+                        var despesa = await _context.Despesas.FindAsync(registoId);
+                        if (despesa == null)
+                        {
+                            TempData["Erro"] = "Registo não encontrado.";
+                            return RedirectToPage();
+                        }
+                        _context.Despesas.Remove(despesa);
+                        break;
+
+                    case "metamovimento":
+                        var movimento = await _context.MetaMovimentos
+                            .Include(m => m.Meta)
+                            .FirstOrDefaultAsync(m => m.Id == registoId);
+
+                        if (movimento == null)
+                        {
+                            TempData["Erro"] = "Registo não encontrado.";
+                            return RedirectToPage();
+                        }
+
+                        if (movimento.Tipo == "Deposito")
+                            movimento.Meta.ValorAtual -= movimento.Valor;
+                        else if (movimento.Tipo == "Levantamento")
+                            movimento.Meta.ValorAtual += movimento.Valor;
+
+                        if (movimento.Meta.ValorAtual < 0)
+                            movimento.Meta.ValorAtual = 0;
+
+                        _context.MetaMovimentos.Remove(movimento);
+                        break;
+
+                    default:
+                        TempData["Erro"] = "Tipo de registo desconhecido.";
+                        return RedirectToPage();
                 }
 
-                var response = await client.DeleteAsync(url);
-                TempData[response.IsSuccessStatusCode ? "Sucesso" : "Erro"] = response.IsSuccessStatusCode
-                    ? "Registo apagado com sucesso."
-                    : "Não foi possível apagar o registo.";
+                await _context.SaveChangesAsync();
+                TempData["Sucesso"] = "Registo apagado com sucesso.";
             }
-            catch (HttpRequestException ex) { TempData["Erro"] = ex.Message; }
+            catch (Exception ex)
+            {
+                TempData["Erro"] = ex.Message;
+            }
             return RedirectToPage();
         }
 
@@ -135,20 +319,13 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
         {
             Username = User.Identity?.Name ?? "Utilizador";
             var utilizadorId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
 
             try
             {
-                var sessoesResponse = await client.GetAsync("api/SessaoFinanceiras");
-                if (!sessoesResponse.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar o dashboard.";
-                    return;
-                }
-
-                var todas = await sessoesResponse.Content.ReadFromJsonAsync<List<Data.Models.SessaoFinanceira>>(FinanceApiHelper.JsonOptions) ?? [];
-                var sessoes = FinanceApiHelper.FiltrarSessoesDoUtilizador(todas, User)
-                    .OrderByDescending(s => s.DataCriacao).ToList();
+                var sessoes = await _context.SessoesFinanceiras
+                    .Where(s => s.UtilizadorId == utilizadorId)
+                    .OrderByDescending(s => s.DataCriacao)
+                    .ToListAsync();
 
                 TotalSessoes = sessoes.Count;
 
@@ -157,15 +334,27 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
                 if (sessoes.Count > 0)
                 {
-                    var (r, d, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
-                    if (erro != null) { MensagemErro = erro; return; }
+                    var ids = sessoes.Select(s => s.Id).ToList();
 
-                    var ids = sessoes.Select(s => s.Id).ToHashSet();
-                    receitas = r.Where(x => ids.Contains(x.SessaoFinanceiraId)).ToList();
-                    despesas = d.Where(x => ids.Contains(x.SessaoFinanceiraId)).ToList();
+                    receitas = await _context.Receitas
+                        .Where(r => ids.Contains(r.SessaoFinanceiraId))
+                        .ToListAsync();
 
-                    ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
-                        .OrderByDescending(x => x.DataCriacao).ToList();
+                    despesas = await _context.Despesas
+                        .Where(d => ids.Contains(d.SessaoFinanceiraId))
+                        .ToListAsync();
+
+                    ResumoPorSessao = sessoes.Select(s => new SessaoResumoViewModel
+                    {
+                        SessaoId = s.Id,
+                        Nome = s.Nome,
+                        Descricao = s.Descricao,
+                        DataCriacao = s.DataCriacao,
+                        TotalReceitas = receitas.Where(r => r.SessaoFinanceiraId == s.Id).Sum(r => r.Valor),
+                        TotalDespesas = despesas.Where(d => d.SessaoFinanceiraId == s.Id).Sum(d => d.Valor)
+                    })
+                    .OrderByDescending(x => x.DataCriacao)
+                    .ToList();
 
                     // Excluir transferências e movimentos de poupança dos totais globais
                     var receitasReais = receitas.Where(r =>
@@ -176,8 +365,18 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                         d.Descricao == null ||
                         (!d.Descricao.Contains("→") && !d.Descricao.Contains("Depósito para poupança"))).ToList();
 
-                    var resumosReais = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitasReais, despesasReais).ToList();
-                    (TotalReceitas, TotalDespesas) = FinanceApiHelper.CalcularTotaisAgregados(resumosReais);
+                    var resumosReais = sessoes.Select(s => new SessaoResumoViewModel
+                    {
+                        SessaoId = s.Id,
+                        Nome = s.Nome,
+                        Descricao = s.Descricao,
+                        DataCriacao = s.DataCriacao,
+                        TotalReceitas = receitasReais.Where(r => r.SessaoFinanceiraId == s.Id).Sum(r => r.Valor),
+                        TotalDespesas = despesasReais.Where(d => d.SessaoFinanceiraId == s.Id).Sum(d => d.Valor)
+                    }).ToList();
+
+                    TotalReceitas = resumosReais.Sum(r => r.TotalReceitas);
+                    TotalDespesas = resumosReais.Sum(r => r.TotalDespesas);
 
                     ChartDataJson = JsonSerializer.Serialize(new
                     {
@@ -190,23 +389,22 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                 }
 
                 // Metas
-                var metasResponse = await client.GetAsync("api/Meta");
-                if (metasResponse.IsSuccessStatusCode)
-                {
-                    var todasMetas = await metasResponse.Content.ReadFromJsonAsync<List<Data.Models.Meta>>(FinanceApiHelper.JsonOptions) ?? [];
-                    Metas = todasMetas.Where(m => m.UtilizadorId == utilizadorId).OrderBy(m => m.DataCriacao)
-                        .Select(m => new MetaViewModel { Id = m.Id, Nome = m.Nome, Descricao = m.Descricao, ValorAlvo = m.ValorAlvo, ValorAtual = m.ValorAtual, UtilizadorId = m.UtilizadorId, DataCriacao = m.DataCriacao })
-                        .ToList();
-                }
+                var todasMetas = await _context.Metas
+                    .Where(m => m.UtilizadorId == utilizadorId)
+                    .OrderBy(m => m.DataCriacao)
+                    .ToListAsync();
+
+                Metas = todasMetas
+                    .Select(m => new MetaViewModel { Id = m.Id, Nome = m.Nome, Descricao = m.Descricao, ValorAlvo = m.ValorAlvo, ValorAtual = m.ValorAtual, UtilizadorId = m.UtilizadorId, DataCriacao = m.DataCriacao })
+                    .ToList();
 
                 // Bolsa
-                var bolsaResponse = await client.GetAsync($"api/Bolsa/{utilizadorId}");
-                if (bolsaResponse.IsSuccessStatusCode)
-                {
-                    var bolsaData = await bolsaResponse.Content.ReadFromJsonAsync<BolsaDto>(FinanceApiHelper.JsonOptions);
-                    if (bolsaData != null)
-                        Bolsa = new BolsaViewModel { UtilizadorId = utilizadorId, Saldo = bolsaData.Saldo, DataAtualizacao = bolsaData.DataAtualizacao };
-                }
+                var bolsaData = await _context.Bolsas
+                    .FirstOrDefaultAsync(b => b.UtilizadorId == utilizadorId);
+
+                Bolsa = bolsaData != null
+                    ? new BolsaViewModel { UtilizadorId = utilizadorId, Saldo = bolsaData.Saldo, DataAtualizacao = bolsaData.DataAtualizacao }
+                    : new BolsaViewModel { UtilizadorId = utilizadorId, Saldo = 0m, DataAtualizacao = DateTime.Now };
 
                 // Historico
                 var metaIds = Metas.Select(m => m.Id).ToHashSet();
@@ -250,23 +448,23 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                         Descricao = d.Descricao ?? ""
                     });
 
-                var movimentosResponse = await client.GetAsync("api/Meta/movimentos");
-                IEnumerable<HistoricoItemViewModel> metaMovimentos = [];
-                if (movimentosResponse.IsSuccessStatusCode)
-                {
-                    var movimentos = await movimentosResponse.Content.ReadFromJsonAsync<List<MetaMovimentoDto>>(FinanceApiHelper.JsonOptions) ?? [];
-                    metaMovimentos = movimentos.Where(m => metaIds.Contains(m.MetaId))
-                        .Select(m => new HistoricoItemViewModel
-                        {
-                            RegistoId = m.Id,
-                            TipoRegisto = "metamovimento",
-                            Data = m.Data,
-                            Tipo = m.Tipo == "Deposito" ? "Deposito na Conta Poupança" : "Levantamento da Conta Poupança",
-                            Icone = m.Tipo == "Deposito" ? "↑" : "↓",
-                            Valor = m.Valor,
-                            Descricao = $"Conta Poupança: {Metas.FirstOrDefault(meta => meta.Id == m.MetaId)?.Nome ?? ""}"
-                        });
-                }
+                var movimentos = await _context.MetaMovimentos
+                    .Include(m => m.Meta)
+                    .OrderByDescending(m => m.Data)
+                    .ToListAsync();
+
+                var metaMovimentos = movimentos
+                    .Where(m => metaIds.Contains(m.MetaId))
+                    .Select(m => new HistoricoItemViewModel
+                    {
+                        RegistoId = m.Id,
+                        TipoRegisto = "metamovimento",
+                        Data = m.Data,
+                        Tipo = m.Tipo == "Deposito" ? "Deposito na Conta Poupança" : "Levantamento da Conta Poupança",
+                        Icone = m.Tipo == "Deposito" ? "↑" : "↓",
+                        Valor = m.Valor,
+                        Descricao = $"Conta Poupança: {Metas.FirstOrDefault(meta => meta.Id == m.MetaId)?.Nome ?? ""}"
+                    });
 
                 Historico = itensReceitas
                     .Concat(itensDespesas)
@@ -277,25 +475,10 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
                     .Take(10)
                     .ToList();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Não foi possível carregar o dashboard: {ex.Message}";
             }
-        }
-
-        private class MetaMovimentoDto
-        {
-            public int Id { get; set; }
-            public int MetaId { get; set; }
-            public string Tipo { get; set; } = string.Empty;
-            public decimal Valor { get; set; }
-            public DateTime Data { get; set; }
-        }
-
-        private class BolsaDto
-        {
-            public decimal Saldo { get; set; }
-            public DateTime DataAtualizacao { get; set; }
         }
     }
 }

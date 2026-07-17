@@ -6,28 +6,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
 
-builder.Services.AddHttpClient("GestorFinanceiroApi", (sp, client) =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var env = sp.GetRequiredService<IWebHostEnvironment>();
-    var baseUrl = config["ApiBaseUrl"]
-        ?? (env.IsDevelopment()
-            ? "http://localhost:5281"
-            : "https://gestorfinanceiro-e9h0ctd4gnb9fqca.canadacentral-01.azurewebsites.net");
-    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-})
-.ConfigurePrimaryHttpMessageHandler(sp =>
-{
-    var handler = new HttpClientHandler();
-    var env = sp.GetRequiredService<IWebHostEnvironment>();
-    if (env.IsDevelopment())
-    {
-        handler.ServerCertificateCustomValidationCallback =
-            HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-    }
-    return handler;
-});
-
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

@@ -1,20 +1,21 @@
-using GestorFinanceiro.Web.Helpers;
+using GestorFinanceiro.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Json;
+using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 {
     [Authorize]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public EditModel(IHttpClientFactory httpClientFactory)
+        public EditModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         [BindProperty]
@@ -52,31 +53,16 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
             if (sessaoExistente == null)
                 return RedirectToPage("Index");
 
-            var sessao = new Data.Models.SessaoFinanceira
-            {
-                Id = id,
-                Nome = Nome.Trim(),
-                Descricao = string.IsNullOrWhiteSpace(Descricao) ? null : Descricao.Trim(),
-                DataCriacao = sessaoExistente.DataCriacao,
-                UtilizadorId = sessaoExistente.UtilizadorId
-            };
+            sessaoExistente.Nome = Nome.Trim();
+            sessaoExistente.Descricao = string.IsNullOrWhiteSpace(Descricao) ? null : Descricao.Trim();
 
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
-
-            HttpResponseMessage response;
             try
             {
-                response = await client.PutAsJsonAsync($"api/SessaoFinanceiras/{id}", sessao);
+                await _context.SaveChangesAsync();
             }
-            catch (HttpRequestException ex)
+            catch (DbUpdateException ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
-                return Page();
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                MensagemErro = "Não foi possível atualizar a sessão.";
+                MensagemErro = $"Não foi possível atualizar a sessão: {ex.Message}";
                 return Page();
             }
 
@@ -86,25 +72,15 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
         private async Task<Data.Models.SessaoFinanceira?> CarregarSessaoAsync(int id)
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            var utilizadorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            try
-            {
-                var listResponse = await client.GetAsync("api/SessaoFinanceiras");
-                if (!listResponse.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar a sessão.";
-                    return null;
-                }
+            var sessao = await _context.SessoesFinanceiras
+                .FirstOrDefaultAsync(s => s.Id == id && s.UtilizadorId == utilizadorId);
 
-                var todas = await listResponse.Content.ReadFromJsonAsync<List<Data.Models.SessaoFinanceira>>(FinanceApiHelper.JsonOptions) ?? [];
-                return FinanceApiHelper.FiltrarSessoesDoUtilizador(todas, User).FirstOrDefault(s => s.Id == id);
-            }
-            catch (HttpRequestException ex)
-            {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
-                return null;
-            }
+            if (sessao == null)
+                MensagemErro = "Sessão não encontrada.";
+
+            return sessao;
         }
     }
 }

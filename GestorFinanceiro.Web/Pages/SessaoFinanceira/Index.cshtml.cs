@@ -1,20 +1,21 @@
-using GestorFinanceiro.Web.Helpers;
+using GestorFinanceiro.Data.Context;
 using GestorFinanceiro.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 {
     [Authorize]
     public class IndexModel : PageModel
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IHttpClientFactory httpClientFactory)
+        public IndexModel(ApplicationDbContext context)
         {
-            _httpClientFactory = httpClientFactory;
+            _context = context;
         }
 
         public IList<SessaoResumoViewModel> ResumoPorSessao { get; set; } = [];
@@ -22,43 +23,43 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var client = _httpClientFactory.CreateClient("GestorFinanceiroApi");
+            var utilizadorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             try
             {
-                var response = await client.GetAsync("api/SessaoFinanceiras");
-                if (!response.IsSuccessStatusCode)
-                {
-                    MensagemErro = "Não foi possível carregar as sessões. Verifique se a API está a correr.";
-                    return Page();
-                }
-
-                var todas = await response.Content.ReadFromJsonAsync<List<Data.Models.SessaoFinanceira>>(FinanceApiHelper.JsonOptions) ?? [];
-                var sessoes = FinanceApiHelper.FiltrarSessoesDoUtilizador(todas, User)
+                var sessoes = await _context.SessoesFinanceiras
+                    .Where(s => s.UtilizadorId == utilizadorId)
                     .OrderByDescending(s => s.DataCriacao)
-                    .ToList();
+                    .ToListAsync();
 
                 if (sessoes.Count == 0)
                     return Page();
 
-                var (receitas, despesas, erro) = await FinanceApiHelper.ObterReceitasEDespesasAsync(client);
-                if (erro != null)
+                var ids = sessoes.Select(s => s.Id).ToList();
+
+                var receitas = await _context.Receitas
+                    .Where(r => ids.Contains(r.SessaoFinanceiraId))
+                    .ToListAsync();
+
+                var despesas = await _context.Despesas
+                    .Where(d => ids.Contains(d.SessaoFinanceiraId))
+                    .ToListAsync();
+
+                ResumoPorSessao = sessoes.Select(s => new SessaoResumoViewModel
                 {
-                    MensagemErro = erro;
-                    return Page();
-                }
-
-                var ids = sessoes.Select(s => s.Id).ToHashSet();
-                receitas = receitas.Where(r => ids.Contains(r.SessaoFinanceiraId)).ToList();
-                despesas = despesas.Where(d => ids.Contains(d.SessaoFinanceiraId)).ToList();
-
-                ResumoPorSessao = FinanceApiHelper.ConstruirResumosPorSessao(sessoes, receitas, despesas)
-                    .OrderByDescending(r => r.DataCriacao)
-                    .ToList();
+                    SessaoId = s.Id,
+                    Nome = s.Nome,
+                    Descricao = s.Descricao,
+                    DataCriacao = s.DataCriacao,
+                    TotalReceitas = receitas.Where(r => r.SessaoFinanceiraId == s.Id).Sum(r => r.Valor),
+                    TotalDespesas = despesas.Where(d => d.SessaoFinanceiraId == s.Id).Sum(d => d.Valor)
+                })
+                .OrderByDescending(r => r.DataCriacao)
+                .ToList();
             }
-            catch (HttpRequestException ex)
+            catch (Exception ex)
             {
-                MensagemErro = $"Erro de ligação à API: {ex.Message}";
+                MensagemErro = $"Não foi possível carregar as sessões: {ex.Message}";
             }
 
             return Page();
