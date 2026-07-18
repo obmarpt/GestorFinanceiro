@@ -1,0 +1,71 @@
+@page "{sessaoId:int}"
+@model GestorFinanceiro.Web.Pages.ReceitaRecorrente.IndexModel
+
+@{
+    ViewData["Title"] = "Receitas recorrentes";
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Receitas recorrentes</h1>
+            <p class="subtitle">@Model.SessaoNome</p>
+        </div>
+        <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">➕ Nova regra</a>
+    </div>
+
+    <div class="mt-3 d-flex gap-3 flex-wrap">
+        <a asp-page="/SessaoFinanceira/Detalhe" asp-route-id="@Model.SessaoId" class="back-link">← Voltar à sessão</a>
+        <a asp-page="/Receita/Index" asp-route-sessaoId="@Model.SessaoId" class="back-link">Receitas</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+    else if (!Model.Regras.Any())
+    {
+        <div class="sessions-card section-block">
+            <div class="empty-state">
+                <p>Ainda não existem regras de receita recorrente nesta sessão.</p>
+                <a asp-page="Create" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-success">Criar primeira regra</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="sessions-card section-block">
+            <div class="historico-list">
+                @foreach (var regra in Model.Regras)
+                {
+                    <div class="historico-item">
+                        <span class="historico-icone historico-icone--entrada">↻</span>
+                        <div class="historico-info">
+                            <span class="historico-descricao">@regra.Descricao</span>
+                            <span class="historico-tipo">
+                                Dia @regra.DiaDoMes · @(regra.Ativa ? "Ativa" : "Inativa")
+                                @if (regra.DataFim.HasValue)
+                                {
+                                    <text> · até @regra.DataFim.Value.ToString("dd/MM/yyyy")</text>
+                                }
+                            </span>
+                        </div>
+                        <div class="historico-right">
+                            <span class="historico-valor" style="color:var(--success)">@regra.Valor.ToString("N2") €</span>
+                            <div style="display:flex; gap:0.4rem; margin-top:0.25rem; justify-content:flex-end">
+                                <a asp-page="Edit" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@regra.Id"
+                                   class="btn-app btn-app-sm btn-app-outline">Editar</a>
+                                <a asp-page="Delete" asp-route-sessaoId="@Model.SessaoId" asp-route-id="@regra.Id"
+                                   class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+</div>

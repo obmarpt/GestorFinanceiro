@@ -1,4 +1,5 @@
 using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Web.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -34,6 +35,8 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
 
         public IList<Data.Models.Despesa> Despesas { get; set; } = [];
 
+        public IList<DespesaCategoriaResumo> DespesasPorCategoria { get; set; } = [];
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -49,6 +52,8 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
                 return Page();
             }
 
+            await ReceitaRecorrenteHelper.GerarReceitasPendentesAsync(_context, sessaoId: id);
+
             Nome = sessao.Nome;
             Descricao = sessao.Descricao;
             DataCriacao = sessao.DataCriacao;
@@ -60,6 +65,7 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
                 .ToListAsync();
 
             Despesas = await _context.Despesas
+                .Include(d => d.Categoria)
                 .Where(d => d.SessaoFinanceiraId == id)
                 .OrderByDescending(d => d.Data)
                 .Take(5)
@@ -73,7 +79,25 @@ namespace GestorFinanceiro.Web.Pages.SessaoFinanceira
                 .Where(d => d.SessaoFinanceiraId == id)
                 .SumAsync(d => d.Valor);
 
+            DespesasPorCategoria = await _context.Despesas
+                .Where(d => d.SessaoFinanceiraId == id && d.Categoria != null)
+                .Include(d => d.Categoria)
+                .GroupBy(d => d.Categoria!.Nome)
+                .Select(g => new DespesaCategoriaResumo
+                {
+                    Categoria = g.Key,
+                    Total = g.Sum(d => d.Valor)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToListAsync();
+
             return Page();
+        }
+
+        public class DespesaCategoriaResumo
+        {
+            public string Categoria { get; set; } = string.Empty;
+            public decimal Total { get; set; }
         }
     }
 }

@@ -1,0 +1,33 @@
+@page "{sessaoId:int}/{id:int}"
+@model GestorFinanceiro.Web.Pages.ReceitaRecorrente.DeleteModel
+
+@{
+    ViewData["Title"] = "Eliminar receita recorrente";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <h2>Eliminar receita recorrente</h2>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+        else
+        {
+            <p>Confirma a eliminação da regra <strong>@Model.Descricao</strong>
+               (@Model.Valor.ToString("N2") € no dia @Model.DiaDoMes)?</p>
+
+            <form method="post" class="form-actions">
+                <button type="submit" class="btn-app btn-app-danger">Eliminar</button>
+                <a asp-page="Index" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-secondary">Cancelar</a>
+            </form>
+        }
+
+    </div>
+
+</div>

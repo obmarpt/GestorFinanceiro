@@ -42,6 +42,7 @@ namespace GestorFinanceiro.Web.Pages.Despesa
                 SessaoNome = sessao.Nome;
 
                 Despesas = await _context.Despesas
+                    .Include(d => d.Categoria)
                     .Where(d => d.SessaoFinanceiraId == sessaoId)
                     .OrderByDescending(d => d.Data)
                     .ToListAsync();

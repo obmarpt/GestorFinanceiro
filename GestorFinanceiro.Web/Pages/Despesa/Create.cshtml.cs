@@ -1,8 +1,9 @@
 using GestorFinanceiro.Data.Context;
-using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace GestorFinanceiro.Web.Pages.Despesa
@@ -34,33 +35,50 @@ namespace GestorFinanceiro.Web.Pages.Despesa
         [DataType(DataType.Date)]
         public DateTime Data { get; set; } = DateTime.Today;
 
+        [BindProperty]
+        public int? CategoriaId { get; set; }
+
+        public SelectList Categorias { get; set; } = null!;
+
         public string? MensagemErro { get; set; }
 
-        public IActionResult OnGet(int sessaoId)
+        public async Task<IActionResult> OnGetAsync(int sessaoId)
         {
             SessaoId = sessaoId;
+            await CarregarCategoriasAsync();
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(int sessaoId)
         {
             SessaoId = sessaoId;
+            await CarregarCategoriasAsync();
 
             if (!ModelState.IsValid)
                 return Page();
+
+            if (CategoriaId.HasValue)
+            {
+                var existe = await _context.Categorias.AnyAsync(c => c.Id == CategoriaId.Value);
+                if (!existe)
+                {
+                    ModelState.AddModelError(nameof(CategoriaId), "Categoria inválida.");
+                    return Page();
+                }
+            }
 
             var despesa = new Data.Models.Despesa
             {
                 Descricao = Descricao.Trim(),
                 Valor = Valor,
                 Data = Data,
-                SessaoFinanceiraId = sessaoId
+                SessaoFinanceiraId = sessaoId,
+                CategoriaId = CategoriaId
             };
 
             try
             {
                 _context.Despesas.Add(despesa);
-
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -77,6 +95,15 @@ namespace GestorFinanceiro.Web.Pages.Despesa
             return RedirectToPage(
                 "Index",
                 new { sessaoId });
+        }
+
+        private async Task CarregarCategoriasAsync()
+        {
+            var categorias = await _context.Categorias
+                .OrderBy(c => c.Nome)
+                .ToListAsync();
+
+            Categorias = new SelectList(categorias, "Id", "Nome", CategoriaId);
         }
     }
 }

@@ -1,0 +1,72 @@
+@page "{sessaoId:int}"
+@model GestorFinanceiro.Web.Pages.ReceitaRecorrente.CreateModel
+
+@{
+    ViewData["Title"] = "Nova receita recorrente";
+}
+
+<div class="dashboard-container">
+
+    <div class="dashboard-header">
+        <h2>Nova receita recorrente</h2>
+    </div>
+
+    <div class="sessions-card form-card">
+
+        @if (!string.IsNullOrEmpty(Model.MensagemErro))
+        {
+            <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+        }
+
+        <form method="post" class="form-app">
+
+            <div class="field-group">
+                <label asp-for="Descricao" class="form-label">Descrição</label>
+                <input asp-for="Descricao" class="form-control" placeholder="Ex: Salário" />
+                <span asp-validation-for="Descricao" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="Valor" class="form-label">Valor (€)</label>
+                <input asp-for="Valor" class="form-control" type="number" step="0.01" min="0.01" />
+                <span asp-validation-for="Valor" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="DiaDoMes" class="form-label">Dia do mês</label>
+                <input asp-for="DiaDoMes" class="form-control" type="number" min="1" max="31" />
+                <span asp-validation-for="DiaDoMes" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="DataInicio" class="form-label">Data de início</label>
+                <input asp-for="DataInicio" class="form-control" type="date" />
+                <span asp-validation-for="DataInicio" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="DataFim" class="form-label">Data de fim (opcional)</label>
+                <input asp-for="DataFim" class="form-control" type="date" />
+                <span asp-validation-for="DataFim" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label class="form-label">
+                    <input asp-for="Ativa" type="checkbox" /> Ativa
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-app btn-app-success">Criar regra</button>
+                <a asp-page="Index" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-secondary">Cancelar</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,79 @@
+@page
+@model GestorFinanceiro.Web.Pages.Categoria.IndexModel
+
+@{
+    ViewData["Title"] = "Categorias";
+}
+
+<div class="dashboard-container">
+
+    <partial name="_StatusMessages" />
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Categorias</h1>
+            <p class="subtitle">Organize as despesas por categoria</p>
+        </div>
+        <a asp-page="/SessaoFinanceira/Index" class="btn-app btn-app-secondary">← Sessões</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.MensagemErro))
+    {
+        <div class="alert alert-app alert-app-danger">@Model.MensagemErro</div>
+    }
+
+    <div class="sessions-card form-card mb-4">
+        <h2 class="section-title section-title--sm">Nova categoria</h2>
+        <form method="post" asp-page-handler="Criar" class="form-app">
+            <div class="field-group">
+                <label asp-for="NovaCategoriaNome" class="form-label">Nome</label>
+                <input asp-for="NovaCategoriaNome" class="form-control" placeholder="Ex: Alimentação" />
+                <span asp-validation-for="NovaCategoriaNome" class="text-danger validation-message"></span>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-app btn-app-success">Criar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="sessions-card section-block">
+        @if (!Model.Categorias.Any())
+        {
+            <div class="empty-state">
+                <p>Ainda não existem categorias.</p>
+            </div>
+        }
+        else
+        {
+            <div class="historico-list">
+                @foreach (var cat in Model.Categorias)
+                {
+                    <div class="historico-item">
+                        <div class="historico-info">
+                            <span class="historico-descricao">@cat.Nome</span>
+                            <span class="historico-tipo">@cat.TotalDespesas despesa(s)</span>
+                        </div>
+                        <div class="historico-right">
+                            @if (cat.TotalDespesas == 0)
+                            {
+                                <form method="post" asp-page-handler="Eliminar" asp-route-id="@cat.Id"
+                                      onsubmit="return confirm('Eliminar a categoria @cat.Nome?');">
+                                    <button type="submit" class="btn-app btn-app-sm btn-app-outline-danger">Eliminar</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="historico-tipo">Em uso</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

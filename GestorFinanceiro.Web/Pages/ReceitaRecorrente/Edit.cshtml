@@ -1,14 +1,14 @@
 @page "{sessaoId:int}/{id:int}"
-@model GestorFinanceiro.Web.Pages.Despesa.EditModel
+@model GestorFinanceiro.Web.Pages.ReceitaRecorrente.EditModel
 
 @{
-    ViewData["Title"] = "Editar Despesa";
+    ViewData["Title"] = "Editar receita recorrente";
 }
 
 <div class="dashboard-container">
 
     <div class="dashboard-header">
-        <h2>Editar Despesa</h2>
+        <h2>Editar receita recorrente</h2>
     </div>
 
     <div class="sessions-card form-card">
@@ -19,7 +19,6 @@
         }
 
         <form method="post" class="form-app">
-
             <input type="hidden" asp-for="Id" />
 
             <div class="field-group">
@@ -35,25 +34,34 @@
             </div>
 
             <div class="field-group">
-                <label asp-for="Data" class="form-label">Data</label>
-                <input asp-for="Data" class="form-control" type="date"
-                       value="@Model.Data.ToString("yyyy-MM-dd")" />
-                <span asp-validation-for="Data" class="text-danger validation-message"></span>
+                <label asp-for="DiaDoMes" class="form-label">Dia do mês</label>
+                <input asp-for="DiaDoMes" class="form-control" type="number" min="1" max="31" />
+                <span asp-validation-for="DiaDoMes" class="text-danger validation-message"></span>
             </div>
 
             <div class="field-group">
-                <label asp-for="CategoriaId" class="form-label">Categoria (opcional)</label>
-                <select asp-for="CategoriaId" asp-items="Model.Categorias" class="form-control">
-                    <option value="">— Sem categoria —</option>
-                </select>
-                <span asp-validation-for="CategoriaId" class="text-danger validation-message"></span>
+                <label asp-for="DataInicio" class="form-label">Data de início</label>
+                <input asp-for="DataInicio" class="form-control" type="date" value="@Model.DataInicio.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="DataInicio" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label asp-for="DataFim" class="form-label">Data de fim (opcional)</label>
+                <input asp-for="DataFim" class="form-control" type="date"
+                       value="@(Model.DataFim?.ToString("yyyy-MM-dd"))" />
+                <span asp-validation-for="DataFim" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="field-group">
+                <label class="form-label">
+                    <input asp-for="Ativa" type="checkbox" /> Ativa
+                </label>
             </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-app btn-app-primary">Guardar</button>
                 <a asp-page="Index" asp-route-sessaoId="@Model.SessaoId" class="btn-app btn-app-secondary">Cancelar</a>
             </div>
-
         </form>
 
     </div>

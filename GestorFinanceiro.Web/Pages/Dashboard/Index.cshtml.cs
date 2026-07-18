@@ -1,4 +1,5 @@
 using GestorFinanceiro.Data.Context;
+using GestorFinanceiro.Web.Helpers;
 using GestorFinanceiro.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -322,6 +323,10 @@ namespace GestorFinanceiro.Web.Pages.Dashboard
 
             try
             {
+                await ReceitaRecorrenteHelper.GerarReceitasPendentesAsync(
+                    _context,
+                    utilizadorId: utilizadorId);
+
                 var sessoes = await _context.SessoesFinanceiras
                     .Where(s => s.UtilizadorId == utilizadorId)
                     .OrderByDescending(s => s.DataCriacao)

@@ -1,8 +1,8 @@
 using GestorFinanceiro.Data.Context;
-using GestorFinanceiro.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
@@ -38,6 +38,11 @@ namespace GestorFinanceiro.Web.Pages.Despesa
         [DataType(DataType.Date)]
         public DateTime Data { get; set; }
 
+        [BindProperty]
+        public int? CategoriaId { get; set; }
+
+        public SelectList Categorias { get; set; } = null!;
+
         public string? MensagemErro { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int sessaoId, int id)
@@ -52,6 +57,7 @@ namespace GestorFinanceiro.Web.Pages.Despesa
                 if (despesa == null)
                 {
                     MensagemErro = "Despesa não encontrada.";
+                    await CarregarCategoriasAsync();
                     return Page();
                 }
 
@@ -66,11 +72,14 @@ namespace GestorFinanceiro.Web.Pages.Despesa
                 Descricao = despesa.Descricao;
                 Valor = despesa.Valor;
                 Data = despesa.Data;
+                CategoriaId = despesa.CategoriaId;
+                await CarregarCategoriasAsync();
             }
             catch (Exception ex)
             {
                 MensagemErro =
                     $"Erro ao carregar a despesa: {ex.Message}";
+                await CarregarCategoriasAsync();
             }
 
             return Page();
@@ -80,6 +89,7 @@ namespace GestorFinanceiro.Web.Pages.Despesa
         {
             SessaoId = sessaoId;
             Id = id;
+            await CarregarCategoriasAsync();
 
             if (!ModelState.IsValid)
                 return Page();
@@ -95,10 +105,21 @@ namespace GestorFinanceiro.Web.Pages.Despesa
                     return Page();
                 }
 
+                if (CategoriaId.HasValue)
+                {
+                    var existe = await _context.Categorias.AnyAsync(c => c.Id == CategoriaId.Value);
+                    if (!existe)
+                    {
+                        ModelState.AddModelError(nameof(CategoriaId), "Categoria inválida.");
+                        return Page();
+                    }
+                }
+
                 despesa.Descricao = Descricao.Trim();
                 despesa.Valor = Valor;
                 despesa.Data = Data;
                 despesa.SessaoFinanceiraId = sessaoId;
+                despesa.CategoriaId = CategoriaId;
 
                 _context.Despesas.Update(despesa);
 
@@ -118,6 +139,15 @@ namespace GestorFinanceiro.Web.Pages.Despesa
             return RedirectToPage(
                 "Index",
                 new { sessaoId });
+        }
+
+        private async Task CarregarCategoriasAsync()
+        {
+            var categorias = await _context.Categorias
+                .OrderBy(c => c.Nome)
+                .ToListAsync();
+
+            Categorias = new SelectList(categorias, "Id", "Nome", CategoriaId);
         }
     }
 }

@@ -63,13 +63,35 @@
 
         <div class="detail-actions mb-4">
             <a asp-page="/Receita/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-success">Receitas</a>
+            <a asp-page="/ReceitaRecorrente/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-outline">Recorrentes</a>
             <a asp-page="/Despesa/Index" asp-route-sessaoId="@Model.Id" class="btn-app btn-app-danger">Despesas</a>
+            <a asp-page="/Categoria/Index" class="btn-app btn-app-outline">Categorias</a>
             @if (Model.Saldo > 0)
             {
                 <a asp-page="/Transferencia/Transferir" asp-route-origemId="@Model.Id" asp-route-valor="@Model.Saldo"
                    class="btn-app btn-app-primary">Transferir saldo</a>
             }
         </div>
+
+        @if (Model.DespesasPorCategoria.Any())
+        {
+            <div class="sessions-card section-block mb-4">
+                <h2 class="section-title section-title--sm">Despesas por categoria</h2>
+                <div class="historico-list">
+                    @foreach (var item in Model.DespesasPorCategoria)
+                    {
+                        <div class="historico-item">
+                            <div class="historico-info">
+                                <span class="historico-descricao">@item.Categoria</span>
+                            </div>
+                            <div class="historico-right">
+                                <span class="historico-valor" style="color:var(--danger)">@item.Total.ToString("N2") €</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
 
         <div class="detail-grid">
             <div class="sessions-card">
